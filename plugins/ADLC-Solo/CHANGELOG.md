@@ -1,5 +1,16 @@
 # Changelog
 
+## v12.0.1 (2026-04-08)
+
+### Turn Budget Fixes
+- dev-agent: maxTurns 40 → 50, added graceful degradation (commits partial work + reports remaining ACs via DONE_WITH_CONCERNS when nearing budget)
+- qa-tester: maxTurns 30 → 50, switched Mode 1 to batch-first strategy (run full suite before drilling down), added scoped adversarial fallback when budget is tight
+- build-feature: DONE_WITH_CONCERNS handler now detects "remaining ACs" case and re-spawns new dev-agent for uncovered work
+- spec-writer: unchanged at 30 (sufficient headroom)
+
+### Docs
+- Fixed README: qa-tester runs in main tree, not worktree
+
 ## v12.0.0 (2026-04-07)
 
 Complete redesign from v11. ~74% code reduction (3900 → ~1000 lines).

@@ -51,7 +51,7 @@ adlc-init
 ## Architecture
 
 ```
-3 agents:   spec-writer (Opus) → dev-agent (Sonnet, worktree) → qa-tester (Sonnet, worktree)
+3 agents:   spec-writer (Opus) → dev-agent (Sonnet, worktree) → qa-tester (Sonnet, main tree)
 7 skills:   build-feature, plan-milestone, plan-slice, review-slice, start-session, bugfix, explore
 3 hooks:    protect-spec (PreToolUse), on-agent-stop (SubagentStop), save-context (PreCompact)
 7 companions: pr-review-toolkit, commit-commands, claude-md-management, context7, github, security-guidance, LSP

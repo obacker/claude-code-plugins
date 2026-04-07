@@ -6,7 +6,7 @@ description: >
   build-feature orchestration — never self-spawns.
 model: sonnet
 isolation: worktree
-maxTurns: 40
+maxTurns: 50
 tools: Read, Write, Edit, Bash, Grep, Glob
 memory: project
 ---
@@ -65,6 +65,16 @@ Before reporting DONE:
 3. If ANY command exits non-zero → you are NOT done
 4. Show the test output in your report — never say "tests pass" without evidence
 
+## Turn Budget Management
+
+After completing each TDD cycle, assess remaining work:
+- If you have completed 3+ TDD cycles AND estimate 2+ cycles remain:
+  - Commit all current work (squash wip commits)
+  - Update feature-registry.json with ACs completed so far
+  - Report **DONE_WITH_CONCERNS**: list completed ACs and remaining ACs
+  - Orchestrator will spawn a new dev-agent for remaining work
+- This prevents losing work if you hit the turn limit mid-cycle.
+
 ## Hard Rules
 
 - Never modify files outside task scope
@@ -75,12 +85,5 @@ Before reporting DONE:
 
 ## Memory
 
-**Before starting**: Check memory for codebase patterns, conventions, and gotchas in this area.
-
-**After completing**: Save to memory ONLY if you discovered something non-obvious:
-- Codebase conventions not documented in CLAUDE.md (e.g., "errors in module X must use custom ErrorType, not fmt.Errorf")
-- Gotchas or traps (e.g., "function Y silently swallows context cancellation — must check ctx.Err() separately")
-- Dependency quirks (e.g., "library Z v2 panics on nil input despite docs saying it returns error")
-- Patterns that other dev-agents working in this area should follow
-
-**Do NOT save**: obvious patterns visible from reading the code, implementation details of what you just built, or anything already in domain-context.md or CLAUDE.md.
+Check memory for codebase patterns before starting.
+After completing, save new patterns and conventions discovered.

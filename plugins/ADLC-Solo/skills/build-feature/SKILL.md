@@ -11,7 +11,7 @@ Structured feature development with BDD specs, agent isolation, and verification
 
 This skill requires companion plugins. Before proceeding, verify they are installed:
 - **pr-review-toolkit** (required for Phase 6 — code quality review)
-- **commit-commands** (required for Phase 9 — git operations)
+- **commit-commands** (required for Phase 8 — git operations)
 
 If either is missing, inform the user: "Install required companion plugins first. See README."
 
@@ -26,19 +26,11 @@ If either is missing, inform the user: "Install required companion plugins first
 
 ---
 
-## Phase 0: Activate Enforcement
-
-1. Create `.sdlc/` directory if it doesn't exist
-2. Create `.sdlc/.enforce-worktree` flag file (activates the PreToolUse hook that blocks production code edits on main)
-3. This flag is removed in Phase 9 (Summary) after completion
-
----
-
 ## Phase 1: Discovery
 
 Feature request: $ARGUMENTS
 
-1. Create TodoWrite with phases: Discovery, Specification, Slice Planning, Implementation, Review (Spec Compliance), Review (Code Quality), Verification, Knowledge Capture, Summary
+1. Create TodoWrite with phases: Discovery, Specification, Slice Planning, Implementation, Review (Spec Compliance), Review (Code Quality), Verification, Summary
 2. Read domain-context.md and domain-terms.md
 3. Read CLAUDE.md for project stack and commands
 4. If unclear: ask user (max 3 questions, one at a time)
@@ -107,8 +99,6 @@ Mark Slice Planning complete.
 
 **REQUIRES USER APPROVAL FROM PHASE 3.**
 
-**DO NOT implement tasks yourself. You MUST spawn dev-agents for ALL implementation work.**
-
 1. Run pre_session commands from verification.yml:
    ```bash
    # Read verification.yml, execute pre_session commands
@@ -133,20 +123,13 @@ Mark Slice Planning complete.
    f. Wait for all dev-agents in this slice to return
    g. Collect results: check each agent's completion status
       - **DONE**: proceed
-      - **DONE_WITH_CONCERNS**: note concerns, proceed
+      - **DONE_WITH_CONCERNS**: check if concerns include "remaining ACs":
+        - If yes (turn budget graceful exit): spawn NEW dev-agent for remaining ACs only, passing completed ACs list so it skips them
+        - If no (general concerns): note concerns, proceed
       - **NEEDS_CONTEXT**: provide context and re-spawn
       - **BLOCKED**: report to user, decide whether to skip or fix
 
 3. After all slices complete: proceed to Phase 5
-
-### Anti-Rationalization List (Implementation)
-
-- "I'll just fix it myself, faster than spawning an agent" → That's how enforcement breaks. Delegate.
-- "Too simple for a worktree" → Isolation is not about complexity. It's about safety and discipline.
-- "Just one quick edit on main" → One exception becomes the norm. Use the worktree.
-- "The agent will get confused, let me do it" → Write a clearer prompt. Don't bypass the process.
-- "I'll spawn the agent later, let me start the code first" → Start with the agent. No production code from orchestrator.
-- "This is just a config change, not real code" → If it's in the source tree and not .sdlc/, it goes through dev-agent.
 
 Mark Implementation complete.
 
@@ -228,40 +211,7 @@ Mark Verification complete.
 
 ---
 
-## Phase 8: Knowledge Capture
-
-**Knowledge decays if not written down. Update project knowledge BEFORE summarizing.**
-
-1. **domain-context.md** — Review what was built and check if domain-context.md needs updates:
-   - New modules, services, or architectural components introduced?
-   - New integration points or external dependencies?
-   - Changed data flow or processing pipeline?
-   - If any of the above: update the relevant sections of domain-context.md
-   - If no changes: skip (don't touch the file)
-
-2. **domain-terms.md** — Check if new domain terminology was introduced:
-   - New entity types, status values, or business concepts?
-   - Terms the spec-writer or dev-agent had to clarify during implementation?
-   - If any new terms: append them to domain-terms.md with definitions
-   - If no new terms: skip
-
-3. **CLAUDE.md** — Check if project-level instructions need updating:
-   - New build/test/lint commands introduced?
-   - New conventions established during implementation?
-   - New environment variables or configuration required?
-   - If any: suggest updates to user (don't modify CLAUDE.md without user approval)
-
-4. **Auto-memory** — Save non-obvious learnings to memory system:
-   - Surprising constraints or gotchas discovered during implementation
-   - Key architectural decisions and their rationale (the "why", not the "what")
-   - Patterns that future features in this area should follow
-   - Only save what can't be derived by reading the code or git history
-
-Mark Knowledge Capture complete.
-
----
-
-## Phase 9: Summary
+## Phase 8: Summary
 
 1. Mark all TodoWrite items complete
 2. Present final summary:
@@ -290,12 +240,6 @@ Mark Knowledge Capture complete.
 - Tests: X/Y passing
 - Coverage: [if available]
 
-### Knowledge Updates
-- domain-context.md: [updated / no changes]
-- domain-terms.md: [updated / no changes]
-- CLAUDE.md: [suggestions made / no changes]
-- Memory: [what was saved, if anything]
-
 ### Key Decisions
 - [decisions made during implementation]
 
@@ -303,8 +247,7 @@ Mark Knowledge Capture complete.
 - [anything deferred or noted for future work]
 ```
 
-3. Remove `.sdlc/.enforce-worktree` flag file (deactivates enforcement)
-4. Ask user: "Create PR with commit-commands?" If yes:
+3. Ask user: "Create PR with commit-commands?" If yes:
    ```
    Use /commit-commands:commit-push-pr to create branch, commit, push, and open PR
    ```
