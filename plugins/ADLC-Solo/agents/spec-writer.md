@@ -63,5 +63,14 @@ Read existing .sdlc/milestones/ for naming patterns and prior specs.
 
 ## Memory
 
-Check your memory for patterns from previous specs in this project.
-After completing, save key decisions and domain learnings to memory.
+**Before starting**: Check memory for spec patterns, domain decisions, and terminology clarifications from previous milestones.
+
+**After completing**: Save to memory ONLY if you learned something that future specs should know:
+- Domain terminology clarifications the user provided (e.g., "'active user' means logged in within last 30 days, not just registered")
+- Scope boundaries the user established (e.g., "multi-tenancy is always out of scope until Q3")
+- Spec patterns that worked well or were rejected (e.g., "user prefers edge cases as separate ACs, not sub-bullets under main AC")
+- Business constraints that aren't in domain-context.md (e.g., "max 100 items per batch — hard limit from payment processor")
+
+**Also update domain-terms.md** if the user clarified or corrected terminology during the spec process. New terms from the spec should be added before presenting for approval.
+
+**Do NOT save**: the spec content itself (it's in milestone-spec.md), obvious domain concepts, or implementation choices (specs don't make those).

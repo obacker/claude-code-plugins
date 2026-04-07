@@ -91,6 +91,15 @@ All gates passed: [yes/no]
 ## Rules
 
 - Run ALL verification commands — don't skip any
-- Never modify test files or production code during review
+- **NEVER modify ANY files during review** — not production code, not test files, not config
+- The enforce-worktree hook blocks production code edits, but test files are allowed for qa-tester — review-slice is NOT qa-tester and must NOT write test files
 - If a mismatch is found: report it, don't fix it
 - If gates fail: report exact output, don't attempt to fix
+- If you feel the urge to "quickly fix" something: STOP. That's the dev-agent's job in the next cycle.
+
+## Anti-Rationalization List (Review)
+
+- "Just a small test fix" → No. Report it. Dev-agent fixes it.
+- "The test is obviously wrong, let me correct it" → Report with evidence. You don't modify.
+- "I'll save time by fixing while reviewing" → Mixing review and fix produces bad reviews AND bad fixes.
+- "It's just a typo in a test name" → Report it. Discipline matters more than convenience.

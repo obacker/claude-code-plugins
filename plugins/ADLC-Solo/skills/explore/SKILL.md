@@ -83,10 +83,28 @@ Generated: [date]
 [what to tackle first based on findings]
 ```
 
-If domain-context.md or domain-terms.md are empty: offer to populate them from findings.
+## Step 6: Update Project Knowledge
+
+**Exploration is only valuable if it persists. Update knowledge files from findings.**
+
+1. **domain-context.md** — If empty or outdated:
+   - Write/update architecture overview (pattern, modules, data flow)
+   - Write/update external dependencies (databases, APIs, services)
+   - Write/update deployment context (target, CI/CD, environments)
+   - If domain-context.md already exists and is accurate: skip
+
+2. **domain-terms.md** — If empty or missing terms found in codebase:
+   - Add domain-specific types, entities, and status values discovered
+   - Add business concepts with definitions from code context
+   - If domain-terms.md already exists and is complete: skip
+
+3. **Present changes to user** before committing:
+   - Show what was added/updated in each file
+   - Ask for corrections (you may have inferred wrong meanings)
 
 ## Rules
 
-- This is READ-ONLY exploration. Never modify code.
+- This is READ-ONLY exploration for source code. Never modify production code or test files.
+- domain-context.md and domain-terms.md are knowledge files — these ARE expected outputs of exploration
 - Don't run destructive commands (npm run clean, database resets, etc.)
 - If you find secrets in the codebase: flag them but don't include in report

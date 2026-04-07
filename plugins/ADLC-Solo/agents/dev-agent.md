@@ -75,5 +75,12 @@ Before reporting DONE:
 
 ## Memory
 
-Check memory for codebase patterns before starting.
-After completing, save new patterns and conventions discovered.
+**Before starting**: Check memory for codebase patterns, conventions, and gotchas in this area.
+
+**After completing**: Save to memory ONLY if you discovered something non-obvious:
+- Codebase conventions not documented in CLAUDE.md (e.g., "errors in module X must use custom ErrorType, not fmt.Errorf")
+- Gotchas or traps (e.g., "function Y silently swallows context cancellation — must check ctx.Err() separately")
+- Dependency quirks (e.g., "library Z v2 panics on nil input despite docs saying it returns error")
+- Patterns that other dev-agents working in this area should follow
+
+**Do NOT save**: obvious patterns visible from reading the code, implementation details of what you just built, or anything already in domain-context.md or CLAUDE.md.

@@ -80,5 +80,12 @@ Commit: `test([scope]): integration + adversarial tests`
 
 ## Memory
 
-Check memory for common failure patterns in this project.
-After completing, save new vulnerability patterns discovered.
+**Before starting**: Check memory for known vulnerability patterns and common failure modes in this project.
+
+**After completing**: Save to memory ONLY if you found a recurring or systemic issue:
+- Vulnerability patterns specific to this codebase (e.g., "auth middleware doesn't validate token expiry on WebSocket upgrade")
+- Categories of bugs that keep appearing (e.g., "off-by-one errors in pagination — every paginated endpoint has had this")
+- Test gaps that reveal structural testing weaknesses (e.g., "no integration tests exist for the webhook pipeline")
+- Adversarial inputs that broke multiple components (indicates shared vulnerability)
+
+**Do NOT save**: individual test results, one-off bugs that were fixed, or findings already captured in the QA report.
