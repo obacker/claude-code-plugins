@@ -11,7 +11,7 @@ Structured feature development with BDD specs, agent isolation, and verification
 
 This skill requires companion plugins. Before proceeding, verify they are installed:
 - **pr-review-toolkit** (required for Phase 6 — code quality review)
-- **commit-commands** (required for Phase 8 — git operations)
+- **commit-commands** (required for Phase 9 — git operations)
 
 If either is missing, inform the user: "Install required companion plugins first. See README."
 

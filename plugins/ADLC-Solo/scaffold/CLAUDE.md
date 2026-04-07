@@ -22,10 +22,12 @@ This project uses ADLC v12 for structured feature development.
 1. **Spec first**: No implementation without approved BDD acceptance criteria.
 2. **Immutable spec**: After user approval, ACs cannot be modified by any agent. Protected by hook.
 3. **TDD iron law**: No production code without a failing test first. No exceptions.
-4. **Isolation**: Each dev task runs in its own worktree.
-5. **Review + QA mandatory**: Every slice needs spec compliance check AND code quality review.
-6. **Domain terms**: Use exact terminology from domain-terms.md. Never invent synonyms.
-7. **Verification gates**: All commands in verification.yml must pass before claiming done.
+4. **Isolation**: Each dev task runs in its own worktree. Enforced by hook when `.sdlc/.enforce-worktree` is active.
+5. **Delegate, don't implement**: Orchestrator investigates and plans. Dev-agent implements. Never edit production code directly.
+6. **Review + QA mandatory**: Every slice and bugfix needs spec compliance check AND QA validation.
+7. **Domain terms**: Use exact terminology from domain-terms.md. Never invent synonyms.
+8. **Verification gates**: All commands in verification.yml must pass before claiming done.
+9. **Knowledge capture**: Update domain-context.md, domain-terms.md after implementation. Knowledge that isn't written down is lost.
 
 ### Workflow Commands
 - `/adlc:build-feature [description]` — Full lifecycle (spec → plan → implement → review → QA → verify)
