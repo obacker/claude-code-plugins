@@ -17,8 +17,8 @@ After spec approval, acceptance criteria become **immutable** — enforced by a 
 ## Install
 
 ```bash
-# Install ADLC
-/plugin install adlc@obacker-adlc
+# Install ADLC Solo
+/plugin install adlc-solo@obacker-claude-code-plugins
 
 # Install required companion plugins
 /plugin install pr-review-toolkit@claude-plugins-official
@@ -53,7 +53,7 @@ adlc-init
 ```
 3 agents:   spec-writer (Opus) → dev-agent (Sonnet, worktree) → qa-tester (Sonnet, main tree)
 7 skills:   build-feature, plan-milestone, plan-slice, review-slice, start-session, bugfix, explore
-3 hooks:    protect-spec (PreToolUse), on-agent-stop (SubagentStop), save-context (PreCompact)
+4 hooks:    protect-spec (PreToolUse), enforce-worktree (PreToolUse), on-agent-stop (SubagentStop), save-context (PreCompact)
 7 companions: pr-review-toolkit, commit-commands, claude-md-management, context7, github, security-guidance, LSP
 ```
 
@@ -62,6 +62,7 @@ adlc-init
 | What | How | Level |
 |------|-----|-------|
 | Spec immutability | `protect-spec.py` PreToolUse hook | Platform (hook blocks the action) |
+| Worktree-only code edits | `enforce-worktree.py` PreToolUse hook | Platform (hook blocks the action) |
 | Worktree isolation | `isolation: worktree` in frontmatter | Platform (automatic) |
 | Tool restrictions | `tools:` in agent frontmatter | Platform (enforced) |
 | Model routing | `model:` in agent frontmatter | Platform (enforced) |

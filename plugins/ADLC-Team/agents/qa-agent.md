@@ -60,6 +60,15 @@ Adversarial findings:
 
 Post QA report as comment on the spec GitHub Issue. If critical findings exist, add label `adlc:qa-failed`. Update issue status on project board.
 
+## Turn Budget Management
+
+After completing spec compliance check, assess remaining budget:
+- If spec compliance required writing 3+ missing tests AND multiple re-runs:
+  - Complete the spec compliance report first (this is the highest-value output)
+  - Run a focused subset of adversarial tests (top 3 highest-risk categories only)
+  - Report **PASS_WITH_CONCERNS**: note that full adversarial testing was scoped down, list categories not covered
+- This prevents hitting turn limit mid-adversarial with no usable report.
+
 ## Constraints
 
 - Do NOT modify production code — only test files

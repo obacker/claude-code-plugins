@@ -1,4 +1,5 @@
 ---
+name: build-feature
 description: Full ADLC feature lifecycle — spec, plan, implement, review, QA, verify. Use for any new feature or significant enhancement.
 argument-hint: Feature description (e.g., "add user authentication with JWT")
 ---
@@ -247,7 +248,27 @@ Mark Verification complete.
 - [anything deferred or noted for future work]
 ```
 
-3. Ask user: "Create PR with commit-commands?" If yes:
+3. **Knowledge Capture** — update project knowledge from what was learned:
+
+   a. **domain-context.md** — If implementation revealed undocumented constraints, integration quirks, or architectural assumptions, add them. Skip if nothing new.
+   b. **domain-terms.md** — If new terminology emerged or existing terms were clarified, update. Skip if nothing new.
+   c. **CLAUDE.md** — If new commands, conventions, or stack details were discovered, update. Skip if nothing new.
+   d. **`.sdlc/_active/session-context.md`** — Create/update with:
+      - What was built (AC status table from summary above)
+      - Production-critical findings from review/QA
+      - Deferred items with blockers
+      - Quality gate results
+      - Next session starting point
+   e. **`.sdlc/_active/CAPTURES.md`** — Append any:
+      - Concerns discovered during implementation that weren't resolved
+      - TODOs that couldn't be addressed in this feature scope
+      - Ideas for improvement or refactoring opportunities
+      - Edge cases found by QA that were accepted as known limitations
+   f. **Auto-memory** — Save to memory only if something non-obvious was learned that future features should know. Skip if the code and commits are self-explanatory.
+
+   If nothing was learned (straightforward feature, no surprises): skip all updates.
+
+4. Ask user: "Create PR with commit-commands?" If yes:
    ```
    Use /commit-commands:commit-push-pr to create branch, commit, push, and open PR
    ```

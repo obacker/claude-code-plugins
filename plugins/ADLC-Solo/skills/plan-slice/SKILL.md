@@ -1,4 +1,5 @@
 ---
+name: plan-slice
 description: Break a milestone into implementation slices and tasks. Use after spec is approved to plan the dev work.
 argument-hint: Milestone ID (e.g., "M001")
 ---

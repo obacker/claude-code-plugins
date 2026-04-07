@@ -1,4 +1,5 @@
 ---
+name: bugfix
 description: Lightweight bug fix with root-cause analysis — investigate, delegate fix to dev-agent in worktree, QA validation by qa-tester. No spec/milestone phases.
 argument-hint: Bug description or error message
 ---

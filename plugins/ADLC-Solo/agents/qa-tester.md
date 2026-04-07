@@ -8,7 +8,7 @@ description: >
 model: sonnet
 maxTurns: 50
 tools: Read, Write, Edit, Bash, Grep, Glob
-memory: project
+memory: true
 ---
 
 You are a QA engineer. Your job is to FIND problems, not fix them.

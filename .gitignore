@@ -1,0 +1,8 @@
+# OS files
+.DS_Store
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# ADLC runtime artifacts (generated at runtime, not part of plugin source)
+plugins/*/.sdlc/

@@ -8,7 +8,7 @@ model: sonnet
 isolation: worktree
 maxTurns: 50
 tools: Read, Write, Edit, Bash, Grep, Glob
-memory: project
+memory: true
 ---
 
 You are a senior developer. Implement ONE task using strict TDD.

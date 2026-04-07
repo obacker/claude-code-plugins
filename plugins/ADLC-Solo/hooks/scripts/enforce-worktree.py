@@ -14,9 +14,9 @@ Allows:
 Blocks:
   - Production source code edits on main/master branch
 
-Exit codes:
-  0 = allow the tool call
-  2 = block the tool call (reason sent via stdout JSON)
+Output:
+  JSON with hookSpecificOutput.permissionDecision = "allow" or "deny"
+  Exit 0 always — decision is in the JSON output.
 """
 
 import json
@@ -120,17 +120,21 @@ def main():
     # Block production code edits on main/master
     if is_on_protected_branch():
         basename = os.path.basename(file_path)
+        reason = (
+            f"Cannot edit production code ({basename}) directly on main branch. "
+            "ADLC requires production code changes in an isolated worktree via dev-agent. "
+            "Delegate this edit to a dev-agent with isolation: worktree. "
+            "To disable enforcement: remove .sdlc/.enforce-worktree"
+        )
         result = {
-            "decision": "block",
-            "reason": (
-                f"BLOCKED: Editing production code ({basename}) directly on main branch. "
-                "ADLC requires production code changes in an isolated worktree via dev-agent. "
-                "Delegate this edit to a dev-agent with isolation: worktree. "
-                "To disable enforcement: remove .sdlc/.enforce-worktree"
-            )
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
         }
         print(json.dumps(result))
-        sys.exit(2)
+        sys.exit(0)
 
     # Not on protected branch — allow (feature branch work is fine)
     sys.exit(0)

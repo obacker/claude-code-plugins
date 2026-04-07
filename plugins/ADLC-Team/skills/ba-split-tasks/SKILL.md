@@ -35,19 +35,24 @@ If not approved, stop immediately. Do not proceed.
 
 ## Step 2 — Decompose into tasks
 
+Dev-agents are subagents with **limited turns (maxTurns: 40)**. A task that's too large will hit the turn limit and lose work. Err on the side of too small — two trivial tasks are better than one that times out.
+
 For each task, define:
 - **Title**: `[FEAT-ID]-T[NNN]: [action verb] [what]`
-- **ACs covered**: which acceptance criteria this task implements
-- **Files to touch**: exact file paths (existing or new)
+- **ACs covered**: 1 AC per task (2 only if trivially related)
+- **Files to touch**: exact file paths (existing or new) — max 3 files
 - **Dependencies**: which tasks must complete first
-- **Complexity**: simple (30min) / moderate (60min) / complex (90min)
-- **Test approach**: what tests to write first (RED step)
+- **Complexity**: simple (1 TDD cycle) / moderate (2 TDD cycles)
+- **Test name**: `Test_[Feature]_AC[N]_[Behavior]` — specify it, don't let dev-agent guess
+- **Inline context**: paste the relevant AC text, code snippets, and expected behavior directly in the task. Dev-agent can't ask questions — everything it needs must be in the task file.
 
-Rules:
-- Each task covers 1-3 ACs maximum
-- If a task touches 6+ files, split it
-- If two tasks modify the same file, note the overlap and consider merging
+Sizing rules:
+- **1 AC per task** — split unless ACs are trivially coupled (e.g., create + read of same entity)
+- **Max 3 files changed** — if 4+ files, split by file group
+- **Max 2 TDD cycles** — if you estimate 3+ RED-GREEN-REFACTOR cycles, split
+- If two tasks modify the same file, note the overlap and consider merging or sequencing
 - Flag any task that requires DB migration or infrastructure changes
+- Complex tasks (6+ files, architectural decisions) → split into a "scaffold" task + "logic" task
 
 ## Step 3 — Group into slices
 
@@ -65,25 +70,33 @@ Output to `.sdlc/tasks/[FEAT-ID]/task-[NNN].md`:
 ```markdown
 # [FEAT-ID]-T[NNN]: [Title]
 
-## Acceptance Criteria
-- AC-[N]: [description from spec]
+## Acceptance Criteria (paste full text — don't reference spec)
+**AC-[N]: [title]**
+**Given** [precondition with concrete values]
+**When** [action with specific input]
+**Then** [expected outcome with measurable result]
 
 ## Implementation scope
 **Files to create:**
-- [path]
+- [path] — [purpose]
 
 **Files to modify:**
-- [path] — [what changes]
+- [path] — [what changes and why]
 
 ## Test-first approach
-Write these tests first (RED):
-1. `Test_[Feature]_AC[N]_[Behavior]` — [what it tests]
+Write this test first (RED):
+- `Test_[Feature]_AC[N]_[Behavior]` — [what it asserts, expected input/output]
+
+## Context (paste relevant code snippets)
+```
+[existing function signatures, types, or patterns the dev-agent needs to know]
+```
 
 ## Dependencies
 - Depends on: [task IDs or "none"]
 - Blocks: [task IDs or "none"]
 
-## Complexity: [simple|moderate|complex]
+## Complexity: [simple (1 TDD cycle) | moderate (2 TDD cycles)]
 
 ## Verification
 Run after implementation:

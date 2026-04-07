@@ -1,4 +1,5 @@
 ---
+name: explore
 description: Map an existing codebase — architecture, patterns, dependencies, test coverage, domain concepts. Produces an exploration report.
 ---
 

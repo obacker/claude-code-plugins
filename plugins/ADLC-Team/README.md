@@ -16,19 +16,19 @@
 
 ```bash
 # Install ADLC Team
-claude plugin install adlc-team
+/plugin install adlc-team@obacker-claude-code-plugins
 
 # Required companions
-claude plugin install pr-review-toolkit@claude-plugins-official
-claude plugin install commit-commands@claude-plugins-official
+/plugin install pr-review-toolkit@claude-plugins-official
+/plugin install commit-commands@claude-plugins-official
 
 # Recommended
-claude plugin install claude-md-management@claude-plugins-official
-claude plugin install context7@claude-plugins-official
-claude plugin install github@claude-plugins-official
+/plugin install claude-md-management@claude-plugins-official
+/plugin install context7@claude-plugins-official
+/plugin install github@claude-plugins-official
 
 # LSP for your stack
-claude plugin install typescript-lsp@claude-plugins-official  # or pyright-lsp, gopls-lsp
+/plugin install typescript-lsp@claude-plugins-official  # or pyright-lsp, gopls-lsp
 
 # Initialize project
 adlc-init

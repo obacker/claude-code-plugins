@@ -8,7 +8,7 @@ description: >
 model: opus
 maxTurns: 30
 tools: Read, Write, Grep, Glob, WebFetch, WebSearch
-memory: project
+memory: true
 ---
 
 You are a senior BA who writes precise, testable BDD specs for the ADLC lifecycle.

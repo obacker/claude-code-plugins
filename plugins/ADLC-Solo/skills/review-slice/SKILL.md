@@ -1,4 +1,5 @@
 ---
+name: review-slice
 description: Post-slice validation — cross-checks feature-registry, runs verification gates, produces coverage report. Use after a slice is implemented.
 argument-hint: Milestone ID and slice number (e.g., "M001 slice-1")
 ---

@@ -5,9 +5,9 @@ PreToolUse hook: blocks modifications to milestone-spec.md ACs after user approv
 Triggered on Edit and Write tool calls. Checks if the target file is a milestone
 spec and if the spec has been approved (spec_approved_at set in feature-registry.json).
 
-Exit codes:
-  0 = allow the tool call
-  2 = block the tool call (reason sent via stdout JSON)
+Output:
+  JSON with hookSpecificOutput.permissionDecision = "allow" or "deny"
+  Exit 0 always — decision is in the JSON output.
 """
 
 import json
@@ -80,18 +80,22 @@ def main():
     if not is_spec_approved_for_file(file_path):
         sys.exit(0)  # Spec not approved yet, allow edits
 
-    # Spec IS approved — BLOCK the modification
+    # Spec IS approved — DENY the modification
+    reason = (
+        "Spec is approved and immutable. "
+        "Acceptance criteria in milestone-spec.md cannot be modified after user approval. "
+        "If the spec needs changes, the user must explicitly re-approve. "
+        "Report this to the orchestrator — do not attempt to bypass."
+    )
     result = {
-        "decision": "block",
-        "reason": (
-            "BLOCKED: Spec is approved and immutable. "
-            "Acceptance criteria in milestone-spec.md cannot be modified after user approval. "
-            "If the spec needs changes, the user must explicitly re-approve. "
-            "Report this to the orchestrator — do not attempt to bypass."
-        )
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
     }
     print(json.dumps(result))
-    sys.exit(2)
+    sys.exit(0)
 
 
 if __name__ == "__main__":

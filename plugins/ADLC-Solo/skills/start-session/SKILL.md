@@ -1,4 +1,5 @@
 ---
+name: start-session
 description: Resume ADLC work — loads context, checks state, reports where you left off. Use at the start of every session.
 ---
 

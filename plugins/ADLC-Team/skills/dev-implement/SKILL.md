@@ -123,6 +123,17 @@ gh issue comment [TASK_ISSUE] --body "## DEV: Task complete — [FEAT-ID]-T[NNN]
 **Branch:** ready for PR"
 ```
 
+On dev-agent DONE_WITH_CONCERNS (turn budget graceful exit):
+- Check if concerns include "remaining ACs":
+  - If yes: spawn a NEW dev-agent for remaining ACs only, passing the list of completed ACs so it skips them
+  - If no (general concerns): note concerns, proceed
+```bash
+gh issue comment [TASK_ISSUE] --body "## DEV: Partial completion — [FEAT-ID]-T[NNN]
+**Completed ACs:** [list from dev-agent report]
+**Remaining ACs:** [list from dev-agent report]
+**Status:** Spawning continuation agent"
+```
+
 On dev-agent BLOCKED or NEEDS_CONTEXT:
 ```bash
 gh issue edit [TASK_ISSUE] --add-label "adlc:blocked"

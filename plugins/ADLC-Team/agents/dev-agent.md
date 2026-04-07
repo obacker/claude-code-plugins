@@ -62,6 +62,17 @@ End every task with exactly one status:
 - **NEEDS_CONTEXT** — Cannot proceed without additional information from BA
 - **BLOCKED** — Cannot complete; document the specific blocker
 
+## Turn Budget Management
+
+After completing each TDD cycle, assess remaining work:
+- If you have completed 3+ TDD cycles AND estimate 2+ cycles remain:
+  - Commit all current work (squash wip commits into one)
+  - Update `.sdlc/specs/[FEAT-ID]-registry.json` with ACs completed so far
+  - Update `.sdlc/_active/[FEAT-ID].progress.md` with status and discoveries
+  - Report **DONE_WITH_CONCERNS**: list completed ACs and remaining ACs
+  - Orchestrator will spawn a new dev-agent for remaining work
+- This prevents losing work if you hit the turn limit mid-cycle.
+
 ## Constraints
 
 - Single task scope — do NOT touch files outside your task's declared scope
