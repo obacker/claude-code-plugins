@@ -1,5 +1,5 @@
 {
-  "name": "obacker-adlc",
+  "name": "obacker-claude-code-plugins",
   "owner": {
     "name": "oBacker",
     "email": "tuan@obacker.com"
@@ -17,8 +17,8 @@
       "author": {
         "name": "oBacker"
       },
-      "homepage": "https://github.com/obacker/adlc",
-      "repository": "https://github.com/obacker/adlc",
+      "homepage": "https://github.com/obacker/claude-code-plugins",
+      "repository": "https://github.com/obacker/claude-code-plugins",
       "license": "MIT",
       "keywords": ["sdlc", "bdd", "tdd", "code-review", "multi-agent", "specification"],
       "category": "development-workflow",
