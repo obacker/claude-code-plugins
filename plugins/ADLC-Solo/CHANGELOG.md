@@ -1,5 +1,42 @@
 # Changelog
 
+## v13.0.0 (2026-04-10)
+
+Based on Claude Code Insights analysis (1,434 messages, 172 sessions, 24 days).
+
+### Convention Fixes
+- Agent frontmatter: `tools` field converted to YAML arrays (all 4 agents)
+- plugin.json: `agents` as explicit file path array, added `author.url`
+- hooks.json: `statusMessage` added to all 5 hook entries
+
+### Friction Elimination (M1)
+- enforce-worktree.py: blocks production code edits on ALL branches (was main/master only)
+- New PostToolUse compile-check hook: auto `go vet` / `tsc --noEmit` after source file edits
+- dev-agent: anti-drift rules (turn 10/15 progress gates), context discipline, coverage gate (85%)
+- Tighter turn budgets: dev-agent 50→35, qa agents 20-25 (was 50)
+- scaffold/CLAUDE.md: 7 new sections from Insights (session discipline, process compliance, agent isolation, language conventions, deployment, performance config, project-level hooks)
+
+### Agent Reliability (M2)
+- on-agent-stop.sh: warnings surfaced to stdout (was log-only)
+- build-feature: auto-retry on tool-limit/merge-conflict failures (max 2 retries)
+- build-feature: reads .sdlc/agent-log.txt after each agent return
+
+### QA Agent Split (platform-enforced model routing)
+- Replaced single qa-tester with qa-spec-checker (model: haiku, 20 turns) + qa-adversarial (model: sonnet, 25 turns)
+- Models in agent frontmatter = platform-enforced, not instruction-level
+
+### Task Sizing
+- plan-slice: sizing guide table aligned to 35-turn budget (max 3 files, 1-2 ACs per task)
+- build-feature Phase 3: explicit 35-turn budget in decomposition rules
+
+### Advanced Automation (M3)
+- New /adlc meta-skill: smart router that auto-detects project state
+- build-feature: state machine gates with verification commands at every phase transition
+
+### Project-Level Hooks (M1-T3)
+- New scaffold/settings.json: PostToolUse + PreCompact hooks for ALL Claude Code sessions
+- adlc-init: auto-generates .claude/settings.json with stack-specific compile commands
+
 ## v12.0.1 (2026-04-08)
 
 ### Turn Budget Fixes

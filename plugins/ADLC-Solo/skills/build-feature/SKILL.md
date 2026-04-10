@@ -91,16 +91,16 @@ Mark Specification complete.
    - Each task: max 3 files, 1-2 ACs, completable in ~15-25 turns of TDD
    - If a task would touch 4+ files: split it — dev-agent will hit turn limits
    - Each task specifies: which files to create/modify, which ACs it covers, dependencies on other tasks
-3. Group tasks into slices:
+4. Group tasks into slices:
    - Each slice: half-day of work, 2-3 tasks
    - Independent tasks within a slice CAN be parallelized
    - Dependent tasks MUST be sequential
-4. For each task, specify:
+5. For each task, specify:
    - Exact file paths to create or modify
    - Which ACs this task covers
    - Whether it can run in parallel with other tasks in the slice
    - Expected test names: `Test_[Feature]_AC[N]_[Behavior]`
-5. Present slice plan to user:
+6. Present slice plan to user:
    ```
    Slice 1 (tasks 1-3, ~half day):
      Task 1: [description] → AC1, AC2 → files: src/... [PARALLEL]

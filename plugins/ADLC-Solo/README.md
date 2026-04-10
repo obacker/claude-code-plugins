@@ -83,7 +83,7 @@ adlc-init
 | Worktree isolation | `isolation: worktree` in frontmatter | Platform (automatic) |
 | Tool restrictions | `tools:` in agent frontmatter | Platform (enforced) |
 | Model routing | `model:` in agent frontmatter + spawn-time override | Platform (enforced) |
-| Turn limits | `maxTurns:` in agent frontmatter (dev: 35, qa: 30, spec: 30) | Platform (enforced) |
+| Turn limits | `maxTurns:` in agent frontmatter (dev: 35, qa-spec: 20, qa-adv: 25, spec: 30) | Platform (enforced) |
 | State machine gates | Verification commands at every phase transition | Instruction (hard gates) |
 | Coverage gate | 85% threshold with max 3 attempts | Instruction (dev-agent) |
 | Anti-drift rules | Turn 10/15 progress checks, context discipline | Instruction (dev-agent) |
