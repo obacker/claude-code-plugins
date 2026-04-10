@@ -12,5 +12,9 @@
   "keywords": ["sdlc", "agentic", "team", "ba", "dev", "qa", "github-issues", "github-projects", "spec-driven", "tdd", "bdd"],
   "skills": "../skills/",
   "hooks": "../hooks/hooks.json",
-  "agents": "../agents/"
+  "agents": [
+    "./agents/ba-agent.md",
+    "./agents/dev-agent.md",
+    "./agents/qa-agent.md"
+  ]
 }
