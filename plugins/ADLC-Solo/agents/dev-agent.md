@@ -76,8 +76,18 @@ You WILL be tempted. Resist:
 
 ## Coverage Gate
 
-After GREEN + REFACTOR, check coverage:
-1. Run `go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out` (Go) or `npx vitest --coverage` (frontend)
+After GREEN + REFACTOR, check coverage. Use the command appropriate for your project stack:
+
+| Stack | Coverage Command |
+|-------|-----------------|
+| Go | `go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out` |
+| TypeScript | `npx vitest --coverage` or project-specific command from verification.yml |
+| Python | `pytest --cov=. --cov-report=term-missing` |
+| Rust | `cargo tarpaulin --out stdout` |
+
+If unsure, check verification.yml for a coverage command.
+
+1. Run the coverage command for your stack
 2. If coverage for changed packages < 85%: write additional tests targeting uncovered lines
 3. Re-run until gate passes or max 3 attempts
 4. If still below 85% after 3 attempts: report DONE_WITH_CONCERNS with coverage %

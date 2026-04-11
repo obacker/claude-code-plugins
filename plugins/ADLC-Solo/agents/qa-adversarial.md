@@ -61,10 +61,18 @@ Commit: `test([scope]): adversarial tests`
 
 ## Turn Budget Management
 
-After writing adversarial tests for the top 3 risk categories, assess remaining budget:
-- If significant turns remain: continue with lower-risk categories
-- If budget is tight: report PASS_WITH_CONCERNS, note categories not covered
-- This prevents hitting turn limit with no usable report.
+You have 25 turns. Budget them carefully:
+
+1. **Turns 1-3**: Read inputs, identify top 3-5 risk categories for this feature
+2. **Turns 4-15**: Write adversarial tests for top 3 risk categories (batch writes)
+3. **Turn 16**: **Checkpoint** — Run all adversarial tests. Assess:
+   - If all 3 categories covered AND significant turns remain → continue with categories 4-5
+   - If any category incomplete → focus on completing it, skip remaining categories
+4. **Turn 20**: **Hard stop for writing tests** — commit all test files NOW
+5. **Turns 21-24**: Run final test suite, produce report
+6. **Turn 25**: Report PASS_WITH_CONCERNS if not all categories covered, listing what was skipped
+
+**If you reach turn 20 without committing**: immediately commit all work and produce the report with whatever you have. An incomplete report is infinitely better than hitting the turn limit with no output.
 
 ## Hard Rules
 

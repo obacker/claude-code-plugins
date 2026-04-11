@@ -2,9 +2,10 @@
 """
 PostToolUse hook: runs compile/type checks after Edit/Write on source files.
 
-Checks:
-  - .go files → runs `go vet ./...`
-  - .ts/.tsx files → runs `npx tsc --noEmit`
+Reads the type-check command from verification.yml (post_slice → "Type check")
+so it works with any stack — Go, TypeScript, Python, Rust, etc.
+
+Falls back to extension-based detection if verification.yml is not configured.
 
 Skips:
   - .md, .json, .yaml, .yml files
@@ -22,8 +23,23 @@ import os
 import subprocess
 import sys
 
+try:
+    import yaml as yaml_lib
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
 
 SKIP_EXTENSIONS = {".md", ".json", ".yaml", ".yml", ".toml", ".cfg", ".ini", ".env"}
+
+# Fallback: extension-based checks when verification.yml is not available
+FALLBACK_CHECKS = {
+    ".go": "go vet ./... 2>&1 | head -20",
+    ".ts": "npx tsc --noEmit 2>&1 | head -20",
+    ".tsx": "npx tsc --noEmit 2>&1 | head -20",
+    ".py": "python3 -m py_compile {file} 2>&1",
+    ".rs": "cargo check 2>&1 | head -20",
+}
 
 
 def should_skip(file_path):
@@ -58,6 +74,46 @@ def should_skip(file_path):
             return True
 
     return False
+
+
+def read_typecheck_from_verification_yml():
+    """Read the Type check command from verification.yml post_slice section."""
+    for path in ["verification.yml", "verification.yaml"]:
+        if not os.path.exists(path):
+            continue
+        try:
+            if HAS_YAML:
+                with open(path) as f:
+                    data = yaml_lib.safe_load(f)
+            else:
+                # Minimal YAML parsing for the specific field we need
+                with open(path) as f:
+                    content = f.read()
+                # Look for "Type check" entry and extract command
+                import re
+                match = re.search(
+                    r'-\s*name:\s*["\']?Type check["\']?\s*\n\s*command:\s*["\']?(.+?)["\']?\s*$',
+                    content, re.MULTILINE
+                )
+                if match:
+                    cmd = match.group(1).strip().strip('"').strip("'")
+                    # Skip template variables
+                    if "{{" not in cmd:
+                        return cmd
+                return None
+
+            if not data:
+                continue
+            post_slice = data.get("post_slice", [])
+            for entry in post_slice:
+                if isinstance(entry, dict) and "type check" in entry.get("name", "").lower():
+                    cmd = entry.get("command", "")
+                    # Skip unfilled template variables
+                    if cmd and "{{" not in cmd:
+                        return cmd
+        except Exception:
+            continue
+    return None
 
 
 def run_check(command, label):
@@ -100,15 +156,21 @@ def main():
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
 
-    warning = None
+    # Strategy 1: Read type-check command from verification.yml (stack-agnostic)
+    typecheck_cmd = read_typecheck_from_verification_yml()
+    if typecheck_cmd:
+        warning = run_check(f"{typecheck_cmd} 2>&1 | head -20", "type check")
+        if warning:
+            print(warning)
+        sys.exit(0)
 
-    if ext == ".go":
-        warning = run_check("go vet ./... 2>&1 | head -20", "go vet")
-    elif ext in (".ts", ".tsx"):
-        warning = run_check("npx tsc --noEmit 2>&1 | head -20", "tsc --noEmit")
-
-    if warning:
-        print(warning)
+    # Strategy 2: Fallback to extension-based detection
+    if ext in FALLBACK_CHECKS:
+        cmd = FALLBACK_CHECKS[ext].replace("{file}", file_path)
+        label = f"compile check ({ext})"
+        warning = run_check(cmd, label)
+        if warning:
+            print(warning)
 
     sys.exit(0)
 

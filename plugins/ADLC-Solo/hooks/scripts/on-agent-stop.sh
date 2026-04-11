@@ -42,7 +42,7 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 log_event() {
     echo "[$TIMESTAMP] [$AGENT_NAME] $1" >> "$LOG_FILE"
     # Surface warnings to orchestrator via stdout
-    if [[ "$1" == WARNING* ]]; then
+    if [[ "$1" == *WARNING* ]]; then
         echo "⚠ AGENT WARNING [$AGENT_NAME]: $1"
     fi
 }

@@ -148,11 +148,11 @@ Mark Slice Planning complete.
       - **NEEDS_CONTEXT**: provide context and re-spawn
       - **BLOCKED**: report to user, decide whether to skip or fix
    h. **Read agent log**: After each dev-agent returns, read `.sdlc/agent-log.txt` for warnings surfaced by the SubagentStop hook. Investigate any warnings before proceeding.
-   i. **Auto-retry on failure** (max 2 retries per task):
-      - If error is "tool-use limit exhausted": spawn NEW dev-agent for remaining ACs only, pass completed ACs list and context from failed agent's last commit
-      - If error is "merge conflict": run `git merge --abort` in worktree, re-spawn dev-agent with updated base branch
-      - If error is unknown: report to user with diagnostics from `.sdlc/agent-log.txt`
-      - After 2 failed retries for the same task: escalate to user, do NOT keep retrying
+   i. **Auto-retry on failure** (track retry count per task — start at 0):
+      - If error is "tool-use limit exhausted": retry_count += 1, spawn NEW dev-agent for remaining ACs only, pass completed ACs list and context from failed agent's last commit
+      - If error is "merge conflict": retry_count += 1, run `git merge --abort` in worktree, re-spawn dev-agent with updated base branch
+      - If error is unknown: do NOT retry — report to user immediately with diagnostics from `.sdlc/agent-log.txt`
+      - **Stop condition**: if retry_count >= 2 for the same task → STOP retrying, escalate to user: "Task [N] failed after 2 retries. Errors: [list]. Manual intervention required."
 
 3. After all slices complete: proceed to Phase 5
 
