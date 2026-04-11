@@ -64,7 +64,7 @@ Mark Discovery complete.
 2. Create directory: `.sdlc/milestones/[MILESTONE-ID]/`
 3. Launch **spec-writer** agent:
    ```
-   Agent: spec-writer
+   subagent_type: adlc-solo:spec-writer
    Input: Confirmed feature description + domain context summary
    ```
 4. spec-writer produces: milestone-spec.md + feature-registry.json
@@ -126,7 +126,7 @@ Mark Slice Planning complete.
 
 2. For each slice, in order:
    a. Identify which tasks in this slice are independent (can parallelize)
-   b. **Spawn dev-agent for each task:**
+   b. **Spawn dev-agent for each task** (`subagent_type: adlc-solo:dev-agent`):
       - Independent tasks: **spawn in parallel (multiple Agent calls in ONE message)**
       - Dependent tasks: spawn sequentially after dependency completes
    c. Each dev-agent receives:
@@ -168,7 +168,7 @@ Mark Implementation complete.
 
 1. Launch **qa-spec-checker** agent for **Spec Compliance**:
    ```
-   Agent: qa-spec-checker (platform-enforced model: haiku)
+   subagent_type: adlc-solo:qa-spec-checker
    Input: milestone-spec.md, feature-registry.json, list of changed files
    ```
    - Runs in main working tree (NOT isolated — needs to see merged dev-agent code)
@@ -177,7 +177,7 @@ Mark Implementation complete.
 
 2. Launch **qa-adversarial** agent for **Adversarial Testing**:
    ```
-   Agent: qa-adversarial (platform-enforced model: sonnet)
+   subagent_type: adlc-solo:qa-adversarial
    Input: milestone-spec.md, feature-registry.json, list of changed files, spec compliance results
    ```
    - Runs in main working tree

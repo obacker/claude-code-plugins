@@ -91,7 +91,7 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 **DO NOT implement the fix yourself. You MUST spawn a dev-agent.**
 
 1. Spawn **dev-agent** (`isolation: worktree`, `model: sonnet`):
-   - Use the Agent tool with `subagent_type: general-purpose` and `isolation: worktree`
+   - Use the Agent tool with `subagent_type: adlc-solo:dev-agent` and `isolation: worktree`
    - Pass the full bugfix report content as the prompt
    - Include: hypothesis, reproduction steps, files involved, expected test name
    - Dev-agent instructions:
@@ -116,7 +116,7 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 
 **DO NOT skip QA. You MUST spawn a qa-adversarial agent after dev-agent completes.**
 
-1. Spawn **qa-adversarial** (platform-enforced `model: sonnet`, no isolation — needs to see merged code):
+1. Spawn **qa-adversarial** (`subagent_type: adlc-solo:qa-adversarial`, no isolation — needs to see merged code):
    - Pass: bugfix report, dev-agent's changed files, what was fixed
    - qa-adversarial instructions:
      1. Run the bugfix test FRESH — must pass
