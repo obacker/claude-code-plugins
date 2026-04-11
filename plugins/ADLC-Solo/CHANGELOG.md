@@ -1,5 +1,30 @@
 # Changelog
 
+## v2.1.0 (2026-04-11)
+
+### Fix: Performance env vars now actually set in project settings
+
+`scaffold/CLAUDE.md` documented three env vars under "Performance Configuration" but
+`scaffold/settings.json` had no `env` block — so `adlc-init` never set them. The
+documentation was aspirational, not operational.
+
+**Changes:**
+
+- `scaffold/settings.json`: added `env` block with two confirmed env vars:
+  - `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=75` — compact at 75% of context window
+  - `CLAUDE_CODE_MAX_OUTPUT_TOKENS=16000` — cap output token usage
+- `scaffold/CLAUDE.md`: removed `MAX_THINKING_TOKENS=8000` (not a real env var — absent
+  from the Claude Code binary); updated Performance Configuration section to state that
+  these are auto-configured by `adlc-init`, not manually managed.
+
+**Impact:** New projects initialized with `adlc-init` automatically get the correct
+`.claude/settings.json` `env` block. Existing projects must add the block manually —
+see [UPGRADING.md](UPGRADING.md).
+
+**Merge safety:** Project-level `env` in `.claude/settings.json` is deep-merged with
+global `~/.claude/settings.json` env, so global vars (e.g. `CLAUDE_CODE_SUBAGENT_MODEL`,
+`CLAUDE_CODE_EFFORT_LEVEL`) are unaffected.
+
 ## v2.0.1 (2026-04-11)
 
 - fix: chỉ rõ `subagent_type: adlc-solo:*` trong skills — tránh lỗi "Agent type not found"

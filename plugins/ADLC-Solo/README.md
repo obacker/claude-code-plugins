@@ -2,7 +2,12 @@
 
 Structured feature development for Claude Code: BDD specs, TDD implementation, automated review, and verification gates.
 
-## What's New in v13
+## What's New in v2.1.0
+
+- **Performance env vars actually work** — `adlc-init` now writes `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=75` and `CLAUDE_CODE_MAX_OUTPUT_TOKENS=16000` into `.claude/settings.json`. Previously these were documented in `CLAUDE.md` but never set. Existing projects: see [Upgrading](#upgrading).
+- **Removed fake env var** — `MAX_THINKING_TOKENS` was documented but does not exist in the Claude Code binary. Removed from scaffold.
+
+## What's New in v13 (v2.0.0)
 
 - **Smart router** (`/adlc`) — Auto-detects project state and routes to the right workflow
 - **PostToolUse compile-check** — Automatic `go vet` / `tsc --noEmit` after every Edit/Write on source files
@@ -110,6 +115,21 @@ adlc-init
 - Git initialized project
 - Python 3.x (for hook scripts)
 - Bash (for shell hooks)
+
+## Upgrading
+
+The plugin itself auto-updates if `autoUpdate: true` is set in your marketplace config.
+However, **scaffold files in your projects are not auto-updated** — they are generated
+once by `adlc-init` and owned by your project after that.
+
+When a new release changes scaffold files, you need to manually apply those changes to
+existing projects. See [UPGRADING.md](UPGRADING.md) for per-release instructions.
+
+### Quick reference
+
+| From → To | Action required |
+|-----------|-----------------|
+| any → v2.1.0 | Add `env` block to `.claude/settings.json` (see UPGRADING.md) |
 
 ## License
 

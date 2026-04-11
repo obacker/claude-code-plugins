@@ -74,10 +74,11 @@ To customize: edit `.claude/settings.json` with your project's build/lint comman
 
 ### Performance Configuration
 
-Environment variables for token optimization:
-- `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=75`
-- `CLAUDE_CODE_MAX_OUTPUT_TOKENS=16000`
-- `MAX_THINKING_TOKENS=8000`
+Token optimization env vars are pre-configured in `.claude/settings.json` (set by `adlc-init`):
+- `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=75` — compact at 75% of context window
+- `CLAUDE_CODE_MAX_OUTPUT_TOKENS=16000` — cap output token usage
+
+These merge with global `~/.claude/settings.json` env vars (deep-merge, no replacement).
 
 After compaction: always read `.sdlc/context-snapshot.md` first.
 
