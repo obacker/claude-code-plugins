@@ -38,7 +38,6 @@ FALLBACK_CHECKS = {
     ".ts": "npx tsc --noEmit 2>&1 | head -20",
     ".tsx": "npx tsc --noEmit 2>&1 | head -20",
     ".py": "python3 -m py_compile {file} 2>&1",
-    ".rs": "cargo check 2>&1 | head -20",
 }
 
 

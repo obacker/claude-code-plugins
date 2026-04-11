@@ -83,7 +83,6 @@ After GREEN + REFACTOR, check coverage. Use the command appropriate for your pro
 | Go | `go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out` |
 | TypeScript | `npx vitest --coverage` or project-specific command from verification.yml |
 | Python | `pytest --cov=. --cov-report=term-missing` |
-| Rust | `cargo tarpaulin --out stdout` |
 
 If unsure, check verification.yml for a coverage command.
 
