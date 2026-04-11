@@ -1,6 +1,11 @@
 # Changelog
 
-## v13.0.0 (2026-04-10)
+## v2.0.1 (2026-04-11)
+
+- fix: chỉ rõ `subagent_type: adlc-solo:*` trong skills — tránh lỗi "Agent type not found"
+- fix: xóa fields `skills/hooks/agents` khỏi plugin.json — validator không chấp nhận
+
+## v2.0.0 (2026-04-10)
 
 Based on Claude Code Insights analysis (1,434 messages, 172 sessions, 24 days).
 

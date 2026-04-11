@@ -13,7 +13,7 @@
       "name": "adlc-solo",
       "source": "./plugins/ADLC-Solo",
       "description": "Agent-Driven Lifecycle — structured feature development with BDD specs, TDD implementation, automated review, and verification gates. Requires companion plugins: pr-review-toolkit, commit-commands.",
-      "version": "13.0.0",
+      "version": "2.0.1",
       "author": {
         "name": "oBacker"
       },
