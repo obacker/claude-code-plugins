@@ -4,6 +4,7 @@
 #
 # Reads agent name from stdin JSON. Performs post-completion checks
 # specific to each agent type. Logs results to .sdlc/agent-log.txt.
+# Surfaces warnings to stdout so the orchestrator can see them.
 #
 # Exit 0 always — agent already finished, can't block. Only log.
 # ============================================================================
@@ -40,6 +41,10 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 log_event() {
     echo "[$TIMESTAMP] [$AGENT_NAME] $1" >> "$LOG_FILE"
+    # Surface warnings to orchestrator via stdout
+    if [[ "$1" == *WARNING* ]]; then
+        echo "⚠ AGENT WARNING [$AGENT_NAME]: $1"
+    fi
 }
 
 # Agent-specific validation
@@ -78,7 +83,7 @@ case "$AGENT_NAME" in
         fi
         ;;
 
-    qa-tester)
+    qa-spec-checker|qa-adversarial)
         # Check: test files should be committed
         UNSTAGED_TESTS=$(git diff --name-only -- '*test*' '*spec*' '*.test.*' '*.spec.*' 2>/dev/null | head -5)
         if [[ -n "$UNSTAGED_TESTS" ]]; then

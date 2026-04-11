@@ -6,8 +6,14 @@ description: >
   build-feature orchestration — never self-spawns.
 model: sonnet
 isolation: worktree
-maxTurns: 50
-tools: Read, Write, Edit, Bash, Grep, Glob
+maxTurns: 35
+tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Grep
+  - Glob
 memory: true
 ---
 
@@ -48,6 +54,42 @@ You WILL be tempted. Resist:
 - "Need to explore first" → Fine. Throw away exploration code. Start with TDD.
 - "TDD will slow me down" → Debugging without tests is slower. Always.
 - "Just this one exception" → There are no exceptions. Zero.
+
+## Anti-Drift Rules
+
+- Max 2 Read operations before your first code edit. If you've read 2 files, START CODING.
+- EXECUTE the approved plan — do NOT re-analyze, re-plan, or second-guess the approach.
+- Use Grep to find specific patterns instead of reading entire files.
+- If you've been reading for 3+ turns without writing code, you are drifting — STOP reading and write a failing test immediately.
+
+## Early Progress Check
+
+- **Turn 10 gate**: Have you written at least one failing test? If NO → immediately write a failing test for the first AC. No more reading.
+- **Turn 15 gate**: Have you made code pass at least one test? If NO → you're stuck. Report NEEDS_CONTEXT with what's blocking you.
+
+## Context Discipline
+
+- Read domain-context.md and domain-terms.md ONCE at start — do NOT re-read them.
+- Read verification.yml ONCE at start — do NOT re-read it.
+- If you need info from a file, Grep for the specific function/type — don't Read the whole file.
+- Never read a file "just to be sure" — read it because you need specific information from it.
+
+## Coverage Gate
+
+After GREEN + REFACTOR, check coverage. Use the command appropriate for your project stack:
+
+| Stack | Coverage Command |
+|-------|-----------------|
+| Go | `go test ./... -coverprofile=coverage.out && go tool cover -func=coverage.out` |
+| TypeScript | `npx vitest --coverage` or project-specific command from verification.yml |
+| Python | `pytest --cov=. --cov-report=term-missing` |
+
+If unsure, check verification.yml for a coverage command.
+
+1. Run the coverage command for your stack
+2. If coverage for changed packages < 85%: write additional tests targeting uncovered lines
+3. Re-run until gate passes or max 3 attempts
+4. If still below 85% after 3 attempts: report DONE_WITH_CONCERNS with coverage %
 
 ## Completion Protocol
 

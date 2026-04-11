@@ -93,7 +93,7 @@ All gates passed: [yes/no]
 
 - Run ALL verification commands — don't skip any
 - **NEVER modify ANY files during review** — not production code, not test files, not config
-- The enforce-worktree hook blocks production code edits, but test files are allowed for qa-tester — review-slice is NOT qa-tester and must NOT write test files
+- The enforce-worktree hook blocks production code edits, but test files are allowed for QA agents — review-slice is NOT a QA agent and must NOT write test files
 - If a mismatch is found: report it, don't fix it
 - If gates fail: report exact output, don't attempt to fix
 - If you feel the urge to "quickly fix" something: STOP. That's the dev-agent's job in the next cycle.

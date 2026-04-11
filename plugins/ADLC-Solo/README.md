@@ -1,6 +1,20 @@
-# ADLC v12 — Agent-Driven Lifecycle
+# ADLC v13 — Agent-Driven Lifecycle
 
 Structured feature development for Claude Code: BDD specs, TDD implementation, automated review, and verification gates.
+
+## What's New in v13
+
+- **Smart router** (`/adlc`) — Auto-detects project state and routes to the right workflow
+- **PostToolUse compile-check** — Automatic `go vet` / `tsc --noEmit` after every Edit/Write on source files
+- **Coverage gates** — Dev-agent enforces 85% coverage threshold with max 3 retry attempts
+- **Anti-drift rules** — Dev-agent has turn-10/turn-15 progress gates and context discipline
+- **Auto-retry on agent failure** — Orchestrator retries tool-limit/merge-conflict failures (max 2 retries)
+- **QA agent split** — qa-spec-checker (Haiku, platform-enforced) + qa-adversarial (Sonnet, platform-enforced) replace single qa-tester
+- **Task sizing for 35-turn budget** — plan-slice now sizes tasks to fit dev-agent's tighter turn limit
+- **State machine gates** — Hard verification commands at every phase transition in build-feature
+- **Warning surfacing** — SubagentStop hook outputs warnings to stdout (not just log file)
+- **Tighter turn budgets** — dev-agent 35 turns (was 50), qa-spec-checker 20 turns, qa-adversarial 25 turns
+- **Convention fixes** — YAML array tools in agent frontmatter, statusMessage on all hooks, explicit agents array in plugin.json
 
 ## What It Does
 
@@ -9,8 +23,8 @@ ADLC enforces a disciplined development lifecycle:
 1. **Specification** — BDD acceptance criteria written by a specialized spec-writer agent (Opus)
 2. **Planning** — Features decomposed into parallel-friendly implementation tasks
 3. **Implementation** — Each task runs in an isolated worktree with strict TDD (iron law: no code without a failing test)
-4. **Review** — Two-stage: spec compliance first (qa-tester), then code quality (pr-review-toolkit)
-5. **Verification** — Automated gates from verification.yml, feature-registry cross-checks
+4. **Review** — Two-stage: spec compliance (qa-spec-checker/Haiku), then adversarial (qa-adversarial/Sonnet), then code quality (pr-review-toolkit)
+5. **Verification** — Automated gates from verification.yml, feature-registry cross-checks, state machine enforcement
 6. **Knowledge Capture** — Updates session-context.md, CAPTURES.md, domain files, and auto-memory with learnings
 
 After spec approval, acceptance criteria become **immutable** — enforced by a PreToolUse hook that blocks edits. Agents that approach their turn limit commit partial work and report DONE_WITH_CONCERNS — the orchestrator spawns a continuation agent automatically.
@@ -41,6 +55,7 @@ adlc-init
 
 | Command | Description |
 |---------|-------------|
+| `/adlc` | **Smart router** — auto-detects state, routes to right workflow |
 | `/adlc:build-feature [description]` | Full lifecycle: spec → plan → implement → review → QA → verify |
 | `/adlc:bugfix [description]` | Lightweight fix with root-cause analysis |
 | `/adlc:explore` | Map existing codebase |
@@ -52,9 +67,9 @@ adlc-init
 ## Architecture
 
 ```
-3 agents:   spec-writer (Opus) → dev-agent (Sonnet, worktree) → qa-tester (Sonnet, main tree)
-7 skills:   build-feature, plan-milestone, plan-slice, review-slice, start-session, bugfix, explore
-4 hooks:    protect-spec (PreToolUse), enforce-worktree (PreToolUse), on-agent-stop (SubagentStop), save-context (PreCompact)
+4 agents:   spec-writer (Opus) → dev-agent (Sonnet, worktree) → qa-spec-checker (Haiku) → qa-adversarial (Sonnet)
+8 skills:   adlc (router), build-feature, plan-milestone, plan-slice, review-slice, start-session, bugfix, explore
+5 hooks:    protect-spec (PreToolUse), enforce-worktree (PreToolUse), post-edit-compile-check (PostToolUse), on-agent-stop (SubagentStop), save-context (PreCompact)
 7 companions: pr-review-toolkit, commit-commands, claude-md-management, context7, github, security-guidance, LSP
 ```
 
@@ -63,15 +78,20 @@ adlc-init
 | What | How | Level |
 |------|-----|-------|
 | Spec immutability | `protect-spec.py` PreToolUse hook | Platform (hook blocks the action) |
-| Worktree-only code edits | `enforce-worktree.py` PreToolUse hook | Platform (hook blocks the action) |
+| Worktree-only code edits | `enforce-worktree.py` PreToolUse hook — blocks on ALL branches | Platform (hook blocks the action) |
+| Compile check after edits | `post-edit-compile-check.py` PostToolUse hook | Platform (warning on failure) |
 | Worktree isolation | `isolation: worktree` in frontmatter | Platform (automatic) |
 | Tool restrictions | `tools:` in agent frontmatter | Platform (enforced) |
-| Model routing | `model:` in agent frontmatter | Platform (enforced) |
-| Turn limits | `maxTurns:` in agent frontmatter | Platform (enforced) |
+| Model routing | `model:` in agent frontmatter + spawn-time override | Platform (enforced) |
+| Turn limits | `maxTurns:` in agent frontmatter (dev: 35, qa-spec: 20, qa-adv: 25, spec: 30) | Platform (enforced) |
+| State machine gates | Verification commands at every phase transition | Instruction (hard gates) |
+| Coverage gate | 85% threshold with max 3 attempts | Instruction (dev-agent) |
+| Anti-drift rules | Turn 10/15 progress checks, context discipline | Instruction (dev-agent) |
 | Turn budget mgmt | Agents commit + report DONE_WITH_CONCERNS before hitting limit | Instruction (graceful exit) |
+| Auto-retry | Orchestrator retries tool-limit/merge-conflict failures (max 2) | Instruction (build-feature) |
 | Knowledge capture | build-feature Phase 8 updates session-context.md, CAPTURES.md | Instruction (checklist) |
 | TDD iron law | Agent instructions + anti-rationalization list | Instruction (strict) |
-| Two-stage review | build-feature skill orchestration | Instruction (ordered phases) |
+| Two-stage review | qa-spec-checker (Haiku, platform) → qa-adversarial (Sonnet, platform) → code quality (pr-review-toolkit) | Platform (model in frontmatter) |
 | Verification gates | verification.yml commands | Command (exit code) |
 
 ## Companion Plugin Roles
@@ -88,7 +108,7 @@ adlc-init
 
 - Claude Code with plugin support
 - Git initialized project
-- Python 3.x (for protect-spec.py hook)
+- Python 3.x (for hook scripts)
 - Bash (for shell hooks)
 
 ## License

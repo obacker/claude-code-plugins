@@ -27,6 +27,23 @@ If either is missing, inform the user: "Install required companion plugins first
 
 ---
 
+## Gate Enforcement
+
+Each phase transition has a hard gate with a verification command. You CANNOT advance to the next phase without passing its gate. If a gate fails: fix and re-run. Do NOT skip.
+
+| Phase Transition | Gate Verification |
+|-----------------|-------------------|
+| Discovery → Specification | User confirmed understanding |
+| Specification → Slice Planning | `test -f .sdlc/milestones/[ID]/milestone-spec.md` + user said "approved" + `spec_approved_at` set in feature-registry.json |
+| Slice Planning → Implementation | User approved slice plan |
+| Implementation → Review | All dev-agents returned DONE or DONE_WITH_CONCERNS + zero compile errors (run `go vet ./...` or `tsc --noEmit`) |
+| Review (Spec) → Review (Quality) | qa-spec-checker reports PASS or PASS_WITH_CONCERNS |
+| Review (Quality) → Verification | Critical findings resolved |
+| Verification → Summary | All verification.yml post_slice commands exit 0 + feature-registry cross-check clean + `grep -r 'TODO\|FIXME' [changed files]` returns zero results |
+| Summary → Done | All AC statuses updated in feature-registry.json + knowledge capture complete |
+
+---
+
 ## Phase 1: Discovery
 
 Feature request: $ARGUMENTS
@@ -70,19 +87,20 @@ Mark Specification complete.
 2. Check if `.sdlc/milestones/[MILESTONE-ID]/slice-plan.md` already exists (from `/adlc:plan-slice`):
    - If exists: load it, present to user for confirmation, skip to step 5
    - If not: decompose from scratch (continue below)
-3. Decompose ACs into implementation tasks:
-   - Each task: 1-2 hours of work, clear file scope, maps to specific ACs
+3. Decompose ACs into implementation tasks (dev-agent has **35-turn budget** — size tasks accordingly):
+   - Each task: max 3 files, 1-2 ACs, completable in ~15-25 turns of TDD
+   - If a task would touch 4+ files: split it — dev-agent will hit turn limits
    - Each task specifies: which files to create/modify, which ACs it covers, dependencies on other tasks
-3. Group tasks into slices:
+4. Group tasks into slices:
    - Each slice: half-day of work, 2-3 tasks
    - Independent tasks within a slice CAN be parallelized
    - Dependent tasks MUST be sequential
-4. For each task, specify:
+5. For each task, specify:
    - Exact file paths to create or modify
    - Which ACs this task covers
    - Whether it can run in parallel with other tasks in the slice
    - Expected test names: `Test_[Feature]_AC[N]_[Behavior]`
-5. Present slice plan to user:
+6. Present slice plan to user:
    ```
    Slice 1 (tasks 1-3, ~half day):
      Task 1: [description] → AC1, AC2 → files: src/... [PARALLEL]
@@ -129,6 +147,12 @@ Mark Slice Planning complete.
         - If no (general concerns): note concerns, proceed
       - **NEEDS_CONTEXT**: provide context and re-spawn
       - **BLOCKED**: report to user, decide whether to skip or fix
+   h. **Read agent log**: After each dev-agent returns, read `.sdlc/agent-log.txt` for warnings surfaced by the SubagentStop hook. Investigate any warnings before proceeding.
+   i. **Auto-retry on failure** (track retry count per task — start at 0):
+      - If error is "tool-use limit exhausted": retry_count += 1, spawn NEW dev-agent for remaining ACs only, pass completed ACs list and context from failed agent's last commit
+      - If error is "merge conflict": retry_count += 1, run `git merge --abort` in worktree, re-spawn dev-agent with updated base branch
+      - If error is unknown: do NOT retry — report to user immediately with diagnostics from `.sdlc/agent-log.txt`
+      - **Stop condition**: if retry_count >= 2 for the same task → STOP retrying, escalate to user: "Task [N] failed after 2 retries. Errors: [list]. Manual intervention required."
 
 3. After all slices complete: proceed to Phase 5
 
@@ -142,24 +166,30 @@ Mark Implementation complete.
 
 **Stage 1 must pass before Stage 2 begins.**
 
-1. Launch **qa-tester** agent (runs in main working tree, NOT isolated — needs to see merged dev-agent code):
+1. Launch **qa-spec-checker** agent for **Spec Compliance**:
    ```
-   Agent: qa-tester
+   Agent: qa-spec-checker (platform-enforced model: haiku)
    Input: milestone-spec.md, feature-registry.json, list of changed files
-   Mode: Spec compliance first, then adversarial
    ```
-2. qa-tester checks:
-   - Every AC has a corresponding test
-   - Every test passes
-   - No extra scope (implementation doesn't do more than spec requires)
-   - Adversarial tests for edge cases
+   - Runs in main working tree (NOT isolated — needs to see merged dev-agent code)
+   - Checks: every AC has a test, every test passes, no extra scope
+   - **Spec compliance must PASS before proceeding to adversarial testing.**
+
+2. Launch **qa-adversarial** agent for **Adversarial Testing**:
+   ```
+   Agent: qa-adversarial (platform-enforced model: sonnet)
+   Input: milestone-spec.md, feature-registry.json, list of changed files, spec compliance results
+   ```
+   - Runs in main working tree
+   - Tries to break the implementation: invalid inputs, boundary values, auth bypass, injection, etc.
+
 3. If spec compliance fails:
    - Identify which ACs are not covered or failing
    - Spawn dev-agent(s) to fix specific failures
-   - Re-run qa-tester on fixed areas
+   - Re-run qa-spec-checker on fixed areas
    - **Loop max 3 times. Still failing → report to user.**
 
-Mark Review (Spec Compliance) complete only when qa-tester reports PASS or PASS_WITH_CONCERNS.
+Mark Review (Spec Compliance) complete only when qa-spec-checker reports PASS or PASS_WITH_CONCERNS.
 
 ---
 

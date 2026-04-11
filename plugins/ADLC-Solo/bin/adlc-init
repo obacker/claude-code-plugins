@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# adlc-init — Initialize ADLC v12 for a project
+# adlc-init — Initialize ADLC v13 for a project
 #
 # Copies scaffold templates, detects project stack, generates starter
 # verification.yml with detected commands. Run once per project.
@@ -22,7 +22,7 @@ for arg in "$@"; do
         --force) FORCE=true ;;
         --help|-h)
             echo "Usage: adlc-init [--force]"
-            echo "Initialize ADLC v12 scaffold for the current project."
+            echo "Initialize ADLC v13 scaffold for the current project."
             echo ""
             echo "Options:"
             echo "  --force    Overwrite existing scaffold files"
@@ -38,7 +38,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}ADLC v12 — Project Initialization${NC}"
+echo -e "${BLUE}ADLC v13 — Project Initialization${NC}"
 echo "=================================="
 echo ""
 
@@ -211,20 +211,53 @@ else
     echo -e "  ${YELLOW}SKIP${NC} verification.yml (already exists)"
 fi
 
+# .claude/settings.json — project-level hooks (coexist with plugin hooks)
+mkdir -p .claude
+if [[ ! -f ".claude/settings.json" ]] || [[ "$FORCE" == "true" ]]; then
+    # Build post-edit compile check command based on stack
+    POST_EDIT_CHECK=""
+    PRE_COMPACT_CHECK=""
+    if [[ "$STACK" == Go* ]]; then
+        POST_EDIT_CHECK="go vet ./... 2>&1 | head -20"
+        PRE_COMPACT_CHECK="go build ./... && $LINT_CMD"
+    elif [[ "$STACK" == TypeScript* ]] || [[ "$STACK" == JavaScript* ]]; then
+        POST_EDIT_CHECK="npx tsc --noEmit 2>&1 | head -20"
+        PRE_COMPACT_CHECK="$BUILD_CMD && $LINT_CMD"
+    elif [[ "$STACK" == Python* ]]; then
+        POST_EDIT_CHECK="$TYPECHECK_CMD 2>&1 | head -20"
+        PRE_COMPACT_CHECK="$LINT_CMD"
+    elif [[ "$STACK" == Rust* ]]; then
+        POST_EDIT_CHECK="cargo check 2>&1 | head -20"
+        PRE_COMPACT_CHECK="cargo build && $LINT_CMD"
+    else
+        POST_EDIT_CHECK="echo 'no compile check configured'"
+        PRE_COMPACT_CHECK="echo 'no build validation configured'"
+    fi
+
+    sed \
+        -e "s|{{POST_EDIT_CHECK}}|$POST_EDIT_CHECK|g" \
+        -e "s|{{PRE_COMPACT_CHECK}}|$PRE_COMPACT_CHECK|g" \
+        "$SCAFFOLD_DIR/settings.json" > ".claude/settings.json"
+    echo -e "  ${GREEN}CREATE${NC} .claude/settings.json (project-level hooks)"
+else
+    echo -e "  ${YELLOW}SKIP${NC} .claude/settings.json (already exists)"
+fi
+
 copy_file "$SCAFFOLD_DIR/domain-context.md" "domain-context.md" "domain-context.md"
 copy_file "$SCAFFOLD_DIR/domain-terms.md" "domain-terms.md" "domain-terms.md"
 
 echo ""
 
 # --- Summary ---
-echo -e "${GREEN}ADLC v12 initialized!${NC}"
+echo -e "${GREEN}ADLC v13 initialized!${NC}"
 echo ""
 echo "Next steps:"
 echo "  1. Edit domain-context.md — describe your business domain"
 echo "  2. Edit domain-terms.md — define exact terminology"
 echo "  3. Review verification.yml — adjust commands for your project"
 echo "  4. Review CLAUDE.md — verify detected stack and commands"
-echo "  5. Run: /adlc:build-feature [description] — to start your first feature"
+echo "  5. Review .claude/settings.json — verify project-level hooks"
+echo "  6. Run: /adlc:build-feature [description] — to start your first feature"
 echo ""
 echo "Companion plugins (install if not already):"
 echo "  /plugin install pr-review-toolkit@claude-plugins-official"

@@ -1,12 +1,12 @@
 ---
 name: bugfix
-description: Lightweight bug fix with root-cause analysis — investigate, delegate fix to dev-agent in worktree, QA validation by qa-tester. No spec/milestone phases.
+description: Lightweight bug fix with root-cause analysis — investigate, delegate fix to dev-agent in worktree, QA validation by qa-adversarial. No spec/milestone phases.
 argument-hint: Bug description or error message
 ---
 
 # ADLC Bugfix
 
-Fix a bug using systematic root-cause analysis. Orchestrator investigates, dev-agent implements in worktree, qa-tester validates.
+Fix a bug using systematic root-cause analysis. Orchestrator investigates, dev-agent implements in worktree, qa-adversarial validates.
 
 ## Principles
 
@@ -21,7 +21,7 @@ Fix a bug using systematic root-cause analysis. Orchestrator investigates, dev-a
 |------|-----|-----------|-------|
 | Investigation | Orchestrator (you) | main | — |
 | Implementation | dev-agent | worktree | sonnet |
-| QA Validation | qa-tester | none | sonnet |
+| QA Validation | qa-adversarial | none | sonnet (platform-enforced) |
 | Mechanical tasks | general-purpose agent | none | haiku |
 
 ## Model Routing
@@ -112,14 +112,13 @@ This report is the dev-agent's input. Writing it forces clear thinking.
    - **BLOCKED**: after 3 re-attempts → STOP, report to user:
      "Root cause may be different than hypothesized. Evidence: [...]"
 
-### Phase 4: QA Validation (qa-tester — MANDATORY)
+### Phase 4: QA Validation (qa-adversarial — MANDATORY)
 
-**DO NOT skip QA. You MUST spawn a qa-tester after dev-agent completes.**
+**DO NOT skip QA. You MUST spawn a qa-adversarial agent after dev-agent completes.**
 
-1. Spawn **qa-tester** (`model: sonnet`, no isolation — needs to see merged code):
-   - Use the Agent tool with `subagent_type: general-purpose`
+1. Spawn **qa-adversarial** (platform-enforced `model: sonnet`, no isolation — needs to see merged code):
    - Pass: bugfix report, dev-agent's changed files, what was fixed
-   - qa-tester instructions:
+   - qa-adversarial instructions:
      1. Run the bugfix test FRESH — must pass
      2. Run full test suite — no regressions
      3. Write 2-3 adversarial tests for the fixed code:
@@ -128,8 +127,8 @@ This report is the dev-agent's input. Writing it forces clear thinking.
         - Related failure scenarios
      4. Report: PASS / FAIL / PASS_WITH_CONCERNS with evidence
 
-2. If qa-tester reports FAIL:
-   - Re-spawn dev-agent with qa-tester's findings
+2. If qa-adversarial reports FAIL:
+   - Re-spawn dev-agent with qa-adversarial's findings
    - Loop max 2 times. Still failing → report to user.
 
 ### Phase 5: Verify & Complete
@@ -169,7 +168,7 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 ### Fix (dev-agent, worktree: [branch-name])
 [What was changed — files and summary]
 
-### QA (qa-tester)
+### QA (qa-adversarial)
 - Result: PASS / FAIL / PASS_WITH_CONCERNS
 - Adversarial tests added: [N]
 - Findings: [summary]
@@ -189,7 +188,7 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 ## Rules
 
 - **Never implement fixes directly** — always delegate to dev-agent with `isolation: worktree`
-- **Never skip QA** — always spawn qa-tester after dev-agent completes
+- **Never skip QA** — always spawn qa-adversarial after dev-agent completes
 - If the bug relates to an existing milestone: update feature-registry.json if relevant ACs were affected
 - If the bug reveals a missing AC: note it but don't modify milestone-spec.md (suggest adding in next milestone)
 - Never "fix" by disabling or skipping a test

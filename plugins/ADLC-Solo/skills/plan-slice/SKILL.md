@@ -23,21 +23,34 @@ Decompose an approved milestone spec into implementation slices and atomic dev t
 
 ## Task Decomposition Rules
 
+**Dev-agent has a 35-turn budget.** Every task must fit within this. Oversize tasks cause DONE_WITH_CONCERNS cascades and re-spawns — avoid by splitting aggressively.
+
 Each task must be:
-- **Atomic**: completable in 30-90 minutes by a single dev-agent
+- **Small enough for 35 turns**: 1-2 ACs, max 3 files changed. A TDD cycle (read → failing test → implement → green → coverage check) takes ~10-15 turns per file.
 - **Specific**: exact file paths to create/modify, exact ACs covered
 - **Testable**: expected test names listed, verification command specified
 - **Independent where possible**: tasks that don't share files can parallelize
 
+**Sizing guide (based on 35-turn budget):**
+
+| Complexity | Files | ACs | Estimated Turns | Fits in Budget? |
+|-----------|-------|-----|----------------|-----------------|
+| Simple | 1-2 | 1 | 10-15 | Yes — use `model: haiku` |
+| Moderate | 2-3 | 1-2 | 15-25 | Yes — use `model: sonnet` |
+| Large | 4-5 | 2-3 | 25-35 | Tight — split if possible |
+| Too large | 6+ | 3+ | 35+ | **Must split** — will exceed budget |
+
+If a task touches 4+ files: split into two tasks unless the files are tightly coupled (e.g., model + test for same entity).
+
 For each task, specify:
 ```
 Task [N]: [Title]
-- Files: [exact paths to create or modify]
-- ACs covered: [AC IDs]
+- Files: [exact paths to create or modify — max 3 recommended]
+- ACs covered: [AC IDs — max 2 per task]
 - Test names: Test_[Feature]_AC[N]_[Behavior]
 - Dependencies: [task IDs this depends on, or "none"]
 - Parallel: [yes/no — can run simultaneously with other tasks in same slice]
-- Estimated complexity: simple (≤2 files) | moderate (3-5 files) | complex (6+ files)
+- Estimated complexity: simple (1-2 files) | moderate (2-3 files) | large (4+ files, consider splitting)
 - Model recommendation: haiku (simple) | sonnet (moderate) | opus (complex/architectural)
 ```
 
@@ -82,4 +95,5 @@ Present to user for approval before implementation begins.
 - Never create tasks that modify milestone-spec.md
 - If an AC cannot be decomposed into tasks: flag it — the AC may be too vague
 - If task scope overlaps with another task: merge or redefine boundaries
-- A task that touches 6+ files is probably two tasks — split it
+- A task that touches 4+ files should be split — dev-agent has a 35-turn budget
+- If a single AC requires 4+ files: split into "create models/types" + "wire up integration" tasks

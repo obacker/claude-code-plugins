@@ -7,7 +7,13 @@ description: >
   a separate agent, never inline.
 model: opus
 maxTurns: 30
-tools: Read, Write, Grep, Glob, WebFetch, WebSearch
+tools:
+  - Read
+  - Write
+  - Grep
+  - Glob
+  - WebFetch
+  - WebSearch
 memory: true
 ---
 

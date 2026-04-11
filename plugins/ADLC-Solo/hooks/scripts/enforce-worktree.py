@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-PreToolUse hook: blocks production code edits on main branch without worktree isolation.
+PreToolUse hook: blocks production code edits without worktree isolation.
 
 Only active when .sdlc/.enforce-worktree flag file exists in the project root.
 Projects opt-in by creating this file (e.g., via adlc-init or manually).
 
 Allows:
   - .sdlc/ files (orchestrator's domain)
-  - Test/spec/mock/fixture files and directories (qa-tester writes these)
+  - Test/spec/mock/fixture files and directories (QA agents write these)
   - Markdown files (docs, CLAUDE.md, domain-context.md)
   - Edits inside a git worktree (dev-agent runs here)
 
 Blocks:
-  - Production source code edits on main/master branch
+  - Production source code edits on ANY branch when not in a worktree
 
 Output:
   JSON with hookSpecificOutput.permissionDecision = "allow" or "deny"
@@ -40,18 +40,6 @@ def is_in_worktree():
 
         # Worktrees have git-dir like /path/.git/worktrees/<name>
         return "worktrees/" in git_dir
-    except Exception:
-        return False
-
-
-def is_on_protected_branch():
-    """Check if on main or master branch."""
-    try:
-        branch = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, timeout=5
-        ).stdout.strip()
-        return branch in ("main", "master")
     except Exception:
         return False
 
@@ -117,26 +105,22 @@ def main():
     if is_in_worktree():
         sys.exit(0)
 
-    # Block production code edits on main/master
-    if is_on_protected_branch():
-        basename = os.path.basename(file_path)
-        reason = (
-            f"Cannot edit production code ({basename}) directly on main branch. "
-            "ADLC requires production code changes in an isolated worktree via dev-agent. "
-            "Delegate this edit to a dev-agent with isolation: worktree. "
-            "To disable enforcement: remove .sdlc/.enforce-worktree"
-        )
-        result = {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason,
-            }
+    # Block production code edits on ANY branch when not in a worktree
+    basename = os.path.basename(file_path)
+    reason = (
+        f"Cannot edit production code ({basename}) directly. "
+        "ADLC requires production code changes in an isolated worktree via dev-agent. "
+        "Delegate this edit to a dev-agent with isolation: worktree. "
+        "To disable enforcement: remove .sdlc/.enforce-worktree"
+    )
+    result = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
         }
-        print(json.dumps(result))
-        sys.exit(0)
-
-    # Not on protected branch — allow (feature branch work is fine)
+    }
+    print(json.dumps(result))
     sys.exit(0)
 
 

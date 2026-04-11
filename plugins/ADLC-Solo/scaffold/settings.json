@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{POST_EDIT_CHECK}}",
+            "timeout": 15,
+            "statusMessage": "Running compile check..."
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{PRE_COMPACT_CHECK}}",
+            "timeout": 30,
+            "statusMessage": "Running build validation..."
+          }
+        ]
+      }
+    ]
+  }
+}
