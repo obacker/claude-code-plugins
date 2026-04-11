@@ -9,12 +9,5 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/obacker/claude-code-plugins",
-  "keywords": ["sdlc", "agentic", "team", "ba", "dev", "qa", "github-issues", "github-projects", "spec-driven", "tdd", "bdd"],
-  "skills": "../skills/",
-  "hooks": "../hooks/hooks.json",
-  "agents": [
-    "./agents/ba-agent.md",
-    "./agents/dev-agent.md",
-    "./agents/qa-agent.md"
-  ]
+  "keywords": ["sdlc", "agentic", "team", "ba", "dev", "qa", "github-issues", "github-projects", "spec-driven", "tdd", "bdd"]
 }

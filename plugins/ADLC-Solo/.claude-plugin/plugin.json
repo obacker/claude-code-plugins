@@ -10,14 +10,6 @@
   "license": "MIT",
   "homepage": "https://github.com/obacker/claude-code-plugins",
   "keywords": ["sdlc", "bdd", "tdd", "code-review", "multi-agent", "specification"],
-  "skills": "../skills/",
-  "hooks": "../hooks/hooks.json",
-  "agents": [
-    "../agents/dev-agent.md",
-    "../agents/qa-spec-checker.md",
-    "../agents/qa-adversarial.md",
-    "../agents/spec-writer.md"
-  ],
   "userConfig": {
     "projectStack": {
       "title": "Project Stack",
