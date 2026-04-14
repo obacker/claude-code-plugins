@@ -116,7 +116,7 @@ On approval:
    gh issue comment [N] --body "## BA: Spec approved — [FEAT-ID]
    **ACs:** [count] acceptance criteria
    **Spec:** .sdlc/specs/[FEAT-ID]-[slug]-spec.md
-   **Next:** Task breakdown via ba-split-tasks"
+   **Next:** DEV picks up for task breakdown (dev-split-tasks)"
 
    gh issue edit [N] --remove-label "adlc:needs-spec" --add-label "adlc:spec-approved"
    ```

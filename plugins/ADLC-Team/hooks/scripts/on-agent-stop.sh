@@ -41,8 +41,7 @@ case "$AGENT_NAME" in
     ;;
   ba-agent)
     SPEC_FILES=$(find "$SDLC_DIR/specs/" -name "*-spec.md" -newer "$LOG_FILE" 2>/dev/null | wc -l)
-    TASK_FILES=$(find "$SDLC_DIR/tasks/" -name "task-*.md" -newer "$LOG_FILE" 2>/dev/null | wc -l)
-    echo "$TIMESTAMP ba-agent INFO specs_created=$SPEC_FILES tasks_created=$TASK_FILES" >> "$LOG_FILE"
+    echo "$TIMESTAMP ba-agent INFO specs_created=$SPEC_FILES" >> "$LOG_FILE"
     ;;
 esac
 

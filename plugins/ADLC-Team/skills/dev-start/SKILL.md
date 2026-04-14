@@ -51,6 +51,9 @@ Read (skip missing files silently):
 ## Step 3 — Check GitHub state
 
 ```bash
+# Specs approved, ready for task breakdown
+gh issue list --label "adlc:spec-approved" --limit 10 --json number,title
+
 # Tasks ready for pickup
 gh issue list --label "adlc:ready" --limit 20 --json number,title,labels
 
@@ -79,6 +82,9 @@ git status --porcelain 2>/dev/null
 ```
 ## DEV Session — [project name] (Case [A/B/C/D])
 
+**Specs ready for task breakdown:** [count]
+[list with issue numbers — invoke dev-split-tasks]
+
 **In progress:** [count] tasks
 [list with branch names and last activity]
 
@@ -97,6 +103,7 @@ git status --porcelain 2>/dev/null
 ## Step 6 — Wait for user choice
 
 Options:
+- Split spec into tasks → invoke dev-split-tasks
 - Continue task on branch X → resume implementation
 - Pick up task #N → invoke dev-implement
 - Fix bug → invoke dev-bugfix

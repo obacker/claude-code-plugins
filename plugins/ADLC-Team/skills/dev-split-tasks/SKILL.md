@@ -1,6 +1,6 @@
 ---
-name: ba-split-tasks
-description: "Break an approved spec into atomic dev tasks. Trigger: 'break [FEAT-ID] into tasks', 'create tasks for', 'task breakdown for'. Guard: spec must be approved."
+name: dev-split-tasks
+description: "Break an approved spec into atomic dev tasks. Trigger: 'break [FEAT-ID] into tasks', 'create tasks for', 'task breakdown for', 'split tasks'. Guard: spec must be approved. Available to DEV role."
 ---
 
 <context>
@@ -133,9 +133,9 @@ for each task:
     --project [PROJECT_NUMBER]
 
 # Update spec issue
-gh issue comment [SPEC_ISSUE] --body "## BA: Task breakdown complete — [FEAT-ID]
+gh issue comment [SPEC_ISSUE] --body "## DEV: Task breakdown complete — [FEAT-ID]
 **Tasks:** [count] tasks in [count] slices
-**Ready for DEV:** Pick up via dev-start"
+**Ready for implementation:** Pick up via dev-implement"
 
 gh issue edit [SPEC_ISSUE] --remove-label "adlc:spec-approved" --add-label "adlc:tasks-ready"
 ```

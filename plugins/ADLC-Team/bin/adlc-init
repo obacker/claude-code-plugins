@@ -1,5 +1,5 @@
 #!/bin/bash
-# ADLC v6 Team — Project Initialization
+# ADLC v7 Team — Project Initialization
 # Detects stack, generates CLAUDE.md and verification.yml with correct commands.
 # Usage: adlc-init [--force]
 set -euo pipefail
@@ -207,7 +207,7 @@ EOF
 fi
 
 echo ""
-echo "ADLC v6 initialized. Next steps:"
+echo "ADLC v7 initialized. Next steps:"
 echo "  1. Edit CLAUDE.md — fill in project-specific details"
 echo "  2. Edit .sdlc/domain-context.md — describe your business domain"
 echo "  3. Edit .sdlc/domain-terms.md — add domain terminology"

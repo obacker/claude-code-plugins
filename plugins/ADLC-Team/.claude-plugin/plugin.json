@@ -1,7 +1,7 @@
 {
   "name": "adlc-team",
-  "version": "6.0.0",
-  "description": "Agentic Development Lifecycle v6 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 10 skills, GitHub Projects integration. Spec-first BDD workflow with TDD implementation, self-review at every role, QA focus on edge cases and exploratory testing. Requires companion plugins: pr-review-toolkit, commit-commands. Recommended: claude-md-management, context7, github, LSP for your stack.",
+  "version": "7.0.0",
+  "description": "Agentic Development Lifecycle v7 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 10 skills (BA: 2, DEV: 4, QA: 2, Shared: 2), GitHub Projects integration. Spec-first BDD workflow with TDD implementation, code review via pr-review-toolkit, self-review at every role, QA focus on edge cases and exploratory testing. Requires companion plugins: pr-review-toolkit, commit-commands. Recommended: claude-md-management, context7, github, LSP for your stack.",
   "author": {
     "name": "oBacker",
     "email": "tuan@obacker.com",

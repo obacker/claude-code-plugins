@@ -18,11 +18,11 @@
 
 ## ADLC Workflow
 
-This project uses ADLC v6 (Agent-Driven Lifecycle) for structured development.
+This project uses ADLC v7 (Agent-Driven Lifecycle) for structured development.
 
 ### Roles
-- **BA** — Writes BDD specs, breaks into tasks. Self-reviews AC quality before approval.
-- **DEV** — Implements via strict TDD in worktrees. Self-tests before marking done.
+- **BA** — Writes BDD specs. Self-reviews AC quality before approval.
+- **DEV** — Breaks approved specs into tasks, implements via strict TDD in worktrees. Self-tests before marking done.
 - **QA** — Adversarial testing, edge cases, exploratory testing. Quality oversight.
 
 ### Key rules
@@ -36,7 +36,7 @@ This project uses ADLC v6 (Agent-Driven Lifecycle) for structured development.
 ### Skills
 - `ba-start` / `dev-start` / `qa-start` — Start a role session
 - `ba-write-spec` — Write BDD spec for a feature
-- `ba-split-tasks` — Break approved spec into dev tasks
+- `dev-split-tasks` — Break approved spec into dev tasks
 - `dev-implement` — Pick up and implement tasks
 - `dev-bugfix` — Fast-track bug fix
 - `qa-test-adversarial` — Edge case and security testing
@@ -47,7 +47,7 @@ This project uses ADLC v6 (Agent-Driven Lifecycle) for structured development.
 ```
 .sdlc/
 ├── specs/           # BDD specs and feature registries (BA owns)
-├── tasks/           # Task breakdowns per feature (BA owns)
+├── tasks/           # Task breakdowns per feature (DEV owns)
 ├── reviews/         # QA reports (QA owns)
 ├── _active/         # Session progress files (DEV owns)
 ├── domain-context.md

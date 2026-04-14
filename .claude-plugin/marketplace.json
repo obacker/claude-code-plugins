@@ -27,8 +27,8 @@
     {
       "name": "adlc-team",
       "source": "./plugins/ADLC-Team",
-      "description": "Agentic Development Lifecycle v6 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 10 skills, GitHub Projects integration. Spec-first BDD workflow with TDD implementation.",
-      "version": "6.0.0",
+      "description": "Agentic Development Lifecycle v7 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 10 skills, GitHub Projects integration. Spec-first BDD workflow with TDD implementation and code review.",
+      "version": "7.0.0",
       "author": {
         "name": "oBacker"
       },

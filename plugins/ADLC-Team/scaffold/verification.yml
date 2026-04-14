@@ -1,4 +1,4 @@
-# Verification Gates — ADLC v6
+# Verification Gates — ADLC v7
 # All commands must exit 0 to pass. Never hardcode commands in skills — read from here.
 
 pre_session:

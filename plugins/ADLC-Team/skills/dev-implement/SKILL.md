@@ -169,8 +169,53 @@ After each task completes or blocks, update `.sdlc/_active/[FEAT-ID].progress.md
 When all tasks in a slice are done:
 1. Run post_slice verification from `.sdlc/verification.yml`
 2. Cross-check feature registry: every AC should have test_function and passes=true
-3. If all pass, notify: "Slice complete. Ready for QA review."
-4. Update spec issue label: `adlc:ready-for-qa`
+3. If all pass, create PR:
+   ```bash
+   gh pr create --title "[FEAT-ID]: [slice description]" \
+     --body-file .sdlc/_active/[FEAT-ID].progress.md \
+     --label "adlc:review"
+   ```
+
+4. **Run code review — spawn 2 agents in parallel:**
+
+   **Agent 1 — Code review** (code-review:code-review companion):
+   ```
+   Spawn Agent:
+     subagent_type: pr-review-toolkit:code-reviewer
+     prompt: |
+       Review the PR for [FEAT-ID]. Focus on:
+       - Adherence to project guidelines and CLAUDE.md conventions
+       - Code quality, naming, error handling
+       - Security issues (OWASP top 10)
+       - Patterns from .sdlc/KNOWLEDGE.md
+       Report findings with severity levels.
+   ```
+
+   **Agent 2 — Test coverage analysis:**
+   ```
+   Spawn Agent:
+     subagent_type: pr-review-toolkit:pr-test-analyzer
+     prompt: |
+       Analyze test coverage for [FEAT-ID] PR. Check:
+       - Every AC has a corresponding passing test
+       - Edge cases covered (from spec)
+       - No missing error-path tests
+       - Test naming follows Test_[Feature]_AC[N]_[Behavior] convention
+       Report critical gaps.
+   ```
+
+5. Collect results from both agents:
+   - If critical findings → spawn dev-agent to fix → re-verify → update PR
+   - If only minor/no findings → proceed
+
+6. After review passes → update labels:
+   ```bash
+   gh issue edit [SPEC_ISSUE] --add-label "adlc:ready-for-qa"
+   gh pr comment [PR_NUMBER] --body "## DEV: Code review passed
+   **Code quality:** [summary from agent 1]
+   **Test coverage:** [summary from agent 2]
+   **Status:** Ready for QA"
+   ```
 
 ## Model routing reference
 

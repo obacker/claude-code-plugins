@@ -27,9 +27,6 @@ gh issue list --label "adlc:needs-spec" --limit 20 --json number,title,labels,as
 # Specs awaiting approval
 gh issue list --label "adlc:spec-draft" --limit 10 --json number,title
 
-# Specs approved but no tasks yet
-gh issue list --label "adlc:spec-approved" --limit 10 --json number,title
-
 # Recent comments on spec issues (may contain feedback)
 gh issue list --label "adlc:spec-draft" --limit 5 --json number,title,comments
 ```
@@ -47,9 +44,6 @@ Format:
 **Spec awaiting approval:** [count]
 [list with issue numbers]
 
-**Approved, needs task breakdown:** [count]
-[list with issue numbers]
-
 **Suggested next action:** [pick the highest priority item]
 ```
 
@@ -57,7 +51,6 @@ Format:
 
 Do not start working until the user picks an action. Options:
 - Write spec for issue #N → invoke ba-write-spec
-- Break approved spec into tasks → invoke ba-split-tasks
 - Review/update domain terms
 - Explore codebase (if new to repo)
 
