@@ -18,7 +18,7 @@
 
 ## ADLC Workflow
 
-This project uses ADLC v7 (Agent-Driven Lifecycle) for structured development.
+This project uses ADLC v7.1 (Agent-Driven Lifecycle) for structured development.
 
 ### Roles
 - **BA** — Writes BDD specs. Self-reviews AC quality before approval.
@@ -34,7 +34,7 @@ This project uses ADLC v7 (Agent-Driven Lifecycle) for structured development.
 6. **GitHub Issues** — All work tracked via GitHub Issues and Projects
 
 ### Skills
-- `ba-start` / `dev-start` / `qa-start` — Start a role session
+- `smart-start` — Start a session for any role (BA/DEV/QA) — auto-detects or asks
 - `ba-write-spec` — Write BDD spec for a feature
 - `dev-split-tasks` — Break approved spec into dev tasks
 - `dev-implement` — Pick up and implement tasks

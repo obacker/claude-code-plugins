@@ -39,39 +39,22 @@ Choose agent based on mode:
 
 ```
 Spawn Agent:
-  type: general-purpose
+  type: dev-agent (DEV mode) or qa-agent (QA mode)
   model: sonnet
-  isolation: worktree
   prompt: |
-    You are writing Playwright UI tests for [FEAT-ID].
+    Write Playwright UI tests for [FEAT-ID].
 
     ## Tests to write
     [paste planned test list from Phase 1]
 
-    ## Selector strategy (in priority order)
+    ## Selector strategy (priority order)
     1. data-testid attributes (preferred)
     2. ARIA roles: page.getByRole('button', { name: 'Submit' })
     3. Text content: page.getByText('Welcome')
-    4. Placeholder: page.getByPlaceholder('Enter email')
-    5. NEVER use CSS selectors, XPath, or DOM structure
+    4. NEVER use CSS selectors, XPath, or DOM structure
 
-    ## Test structure
-    - File: tests/e2e/[FEAT-ID].spec.ts (or match existing convention)
-    - Naming: test('[FEAT-ID] AC-[N]: [behavior]', ...)
-    - Format: Arrange (Given) → Act (When) → Assert (Then)
-
-    ## After writing
-    1. Run: npx playwright test tests/e2e/[FEAT-ID].spec.ts
-    2. If components need data-testid attributes, list them:
-       "[component] needs data-testid='[id]'"
-    3. Update .sdlc/specs/[FEAT-ID]-registry.json:
-       Set test_function and passes for each AC tested
-
-    ## Report back with:
-    - Tests written (names and file paths)
-    - Test results (pass/fail)
-    - Missing data-testid attributes (if any)
-    - Registry updates made
+    ## File
+    tests/e2e/[FEAT-ID].spec.ts (or match existing convention)
 ```
 
 ## Phase 3 — Review results (you do this in main conversation)
@@ -80,11 +63,6 @@ After agent completes:
 1. Read the test results
 2. If data-testid attributes are needed, note them for DEV
 3. Verify registry was updated
-
-## What you MUST NOT do
-
-- Write test code directly from main conversation
-- Skip spawning agent ("these are simple tests, I'll just write them")
 
 </instructions>
 

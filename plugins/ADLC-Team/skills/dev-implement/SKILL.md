@@ -73,42 +73,20 @@ When user confirms, for each task:
 
    ```
    Spawn Agent:
-     type: general-purpose
+     type: dev-agent
      model: sonnet           ← for moderate/complex tasks
      model: haiku            ← ONLY for simple mechanical tasks (stubs, renames, formatting)
-     isolation: worktree
      prompt: |
-       You are a dev-agent implementing [FEAT-ID]-T[NNN].
-       Follow strict TDD: RED → GREEN → REFACTOR → COMMIT.
+       Implement [FEAT-ID]-T[NNN].
 
        ## Task
        [paste full content of task-[NNN].md]
 
        ## Acceptance criteria from spec
        [paste relevant ACs]
-
-       ## TDD rules
-       - Write failing test FIRST: Test_[Feature]_AC[N]_[Behavior]
-       - Then minimal production code to pass
-       - NO production code without a failing test
-       - After each GREEN: update .sdlc/specs/[FEAT-ID]-registry.json
-         (set test_function and passes=true for the AC)
-
-       ## Verification
-       After all ACs implemented, run from .sdlc/verification.yml:
-       - post_task gates: build, lint, test
-       - Max 2 retries on failure
-
-       ## Commit convention
-       wip([FEAT-ID]/T[NNN]): [description]
-
-       ## Report back with:
-       - Status: DONE / DONE_WITH_CONCERNS / BLOCKED / NEEDS_CONTEXT
-       - Tests written (names)
-       - Files changed
-       - Verification results
-       - Discoveries (patterns/gotchas for KNOWLEDGE.md)
    ```
+
+   The dev-agent definition already includes TDD rules, verification gates, commit convention, completion statuses, and turn budget management. Do NOT repeat these in the spawn prompt.
 
    For parallel tasks (no dependency between them), spawn multiple agents simultaneously.
 
@@ -178,31 +156,17 @@ When all tasks in a slice are done:
 
 4. **Run code review — spawn 2 agents in parallel:**
 
-   **Agent 1 — Code review** (code-review:code-review companion):
    ```
-   Spawn Agent:
+   Spawn Agent 1:
      subagent_type: pr-review-toolkit:code-reviewer
-     prompt: |
-       Review the PR for [FEAT-ID]. Focus on:
-       - Adherence to project guidelines and CLAUDE.md conventions
-       - Code quality, naming, error handling
-       - Security issues (OWASP top 10)
-       - Patterns from .sdlc/KNOWLEDGE.md
-       Report findings with severity levels.
+     prompt: "Review PR for [FEAT-ID]. Spec: .sdlc/specs/[FEAT-ID]-*-spec.md. Knowledge: .sdlc/KNOWLEDGE.md."
+
+   Spawn Agent 2:
+     subagent_type: pr-review-toolkit:pr-test-analyzer
+     prompt: "Analyze test coverage for [FEAT-ID] PR against .sdlc/specs/[FEAT-ID]-registry.json."
    ```
 
-   **Agent 2 — Test coverage analysis:**
-   ```
-   Spawn Agent:
-     subagent_type: pr-review-toolkit:pr-test-analyzer
-     prompt: |
-       Analyze test coverage for [FEAT-ID] PR. Check:
-       - Every AC has a corresponding passing test
-       - Edge cases covered (from spec)
-       - No missing error-path tests
-       - Test naming follows Test_[Feature]_AC[N]_[Behavior] convention
-       Report critical gaps.
-   ```
+   The pr-review-toolkit agents have their own review checklists. Only pass feature-specific references.
 
 5. Collect results from both agents:
    - If critical findings → spawn dev-agent to fix → re-verify → update PR
@@ -217,20 +181,9 @@ When all tasks in a slice are done:
    **Status:** Ready for QA"
    ```
 
-## Model routing reference
+## Model routing
 
-| Task complexity | Model | Example |
-|---|---|---|
-| Simple/mechanical | haiku | Add stubs, rename vars, format files |
-| Moderate implementation | sonnet | Business logic, API endpoints, data layer |
-| Complex/architectural | sonnet | Multi-file refactors, new patterns |
-
-## What you MUST NOT do
-
-- Edit production or test code directly from main conversation
-- Skip spawning dev-agent ("I'll just make this quick change")
-- Use sonnet for mechanical haiku-level tasks (cost waste)
-- Start implementation without user confirming the execution plan
+Use `model: haiku` for simple/mechanical tasks (stubs, renames, formatting). Default `model: sonnet` for everything else.
 
 </instructions>
 

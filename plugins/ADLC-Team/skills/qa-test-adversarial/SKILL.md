@@ -35,12 +35,10 @@ You MUST spawn a qa-agent. Do NOT write test code yourself.
 
 ```
 Spawn Agent:
-  type: general-purpose
+  type: qa-agent
   model: sonnet
-  isolation: worktree
   prompt: |
-    You are a qa-agent running adversarial tests for [FEAT-ID].
-    Your job is to FIND problems, not fix them.
+    Run adversarial tests for [FEAT-ID].
 
     ## Feature spec
     [paste relevant ACs from spec]
@@ -48,31 +46,11 @@ Spawn Agent:
     ## Attack vectors to execute
     [paste your planned attack vectors from Phase 1]
 
-    ## Rules
-    - Write test code for each attack vector
-    - Run tests fresh — never trust cached results
-    - Do NOT modify production code — only test files
-    - Do NOT skip a category because "it probably works"
-    - Record actual behavior vs expected behavior
-    - Classify severity: CRITICAL / HIGH / MEDIUM / LOW
-
     ## Output
-    Write report to .sdlc/reviews/[FEAT-ID]-adversarial-report.md:
-
-    # Adversarial Test Report: [FEAT-ID]
-    **Tester:** qa-agent
-    **Date:** [YYYY-MM-DD]
-
-    ## Summary
-    - Total tests: [N]
-    - Passed: [N]
-    - Failed: [N] (Critical: [N], High: [N], Medium: [N], Low: [N])
-
-    ## Findings
-    [For each finding: category, severity, AC affected, description, repro steps, expected vs actual, evidence]
-
-    ## Verdict: [PASS / FAIL]
+    Write report to .sdlc/reviews/[FEAT-ID]-adversarial-report.md
 ```
+
+The qa-agent definition handles test rules, evidence standards, severity classification, and report format.
 
 ## Phase 3 — Post results (you do this in main conversation)
 
@@ -100,15 +78,9 @@ gh issue edit [SPEC_ISSUE] --remove-label "adlc:ready-for-qa" --add-label "adlc:
 
 When QA fails a feature:
 1. QA posts detailed findings on the spec issue with `adlc:qa-failed` label
-2. DEV picks up the issue in next dev-start (it appears under "Blocked")
+2. DEV picks up the issue in next smart-start DEV session (it appears under "Blocked")
 3. DEV fixes issues, runs verification, removes `adlc:qa-failed` and adds `adlc:ready-for-qa`
-4. QA re-tests in next qa-start (it appears under "Failed QA, needs re-test")
-
-## What you MUST NOT do
-
-- Write test code directly from main conversation
-- Skip spawning qa-agent ("I'll just check a few things manually")
-- Modify production code (even "just to add a log")
+4. QA re-tests in next smart-start QA session (it appears under "Failed QA, needs re-test")
 
 </instructions>
 

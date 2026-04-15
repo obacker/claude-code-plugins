@@ -29,40 +29,22 @@ You MUST spawn a dev-agent. Do NOT edit code yourself.
 
 ```
 Spawn Agent:
-  type: general-purpose
+  type: dev-agent
   model: sonnet
-  isolation: worktree
   prompt: |
-    You are a dev-agent fixing a bug. Follow strict TDD.
+    Fix bug #[ISSUE]: [title].
 
-    ## Bug
+    ## Root cause hypothesis
     [paste hypothesis and relevant code context]
 
-    ## Step 1: Write failing test
-    Create test: Test_Bugfix_[IssueNumber]_[Behavior]
-    The test MUST fail with current code (RED).
+    ## Test name
+    Test_Bugfix_[IssueNumber]_[Behavior]
 
-    ## Step 2: Fix (max 3 attempts)
-    Write minimal production code to make the test pass (GREEN).
-    If 3 attempts fail, report BLOCKED with details.
-
-    ## Step 3: Verify
-    Run ALL verification commands from .sdlc/verification.yml:
-    - post_task gates: build, lint, test
-    If any fail, fix and retry (max 2 retries).
-
-    ## Step 4: Commit
-    git commit -m "fix(#[ISSUE]): [what was wrong and why]
-
-    Root cause: [explanation]
-    Test: Test_Bugfix_[IssueNumber]_[Behavior]"
-
-    ## Report back with:
-    - Status: DONE / BLOCKED / NEEDS_CONTEXT
-    - Test name and output
-    - Files changed
-    - Verification results
+    ## Commit prefix
+    fix(#[ISSUE])
 ```
+
+The dev-agent definition handles TDD workflow, verification gates, and reporting. Only pass bug-specific context.
 
 ## Phase 3 — Spawn qa-agent to verify (MANDATORY)
 
@@ -70,24 +52,19 @@ After dev-agent completes with DONE, you MUST spawn a qa-agent.
 
 ```
 Spawn Agent:
-  type: general-purpose
+  type: qa-agent
   model: sonnet
-  isolation: worktree
   prompt: |
-    You are a qa-agent verifying a bugfix.
+    Verify bugfix for #[ISSUE].
 
     ## What was fixed
     [paste dev-agent's report: root cause, fix, test name]
 
-    ## Your job
-    1. Read the fix diff and the new test
-    2. Write 2-3 adversarial tests around the fix:
-       - Same bug with different input variations
-       - Boundary conditions near the fix
-       - Regression scenarios
-    3. Run ALL verification commands from .sdlc/verification.yml
-    4. Report: PASS (fix is solid) or FAIL (found issues, list them)
+    ## Focus
+    Write 2-3 adversarial tests: input variations, boundary conditions, regression scenarios.
 ```
+
+The qa-agent definition handles verification gates and reporting format.
 
 ## Phase 4 — Document (you do this in main conversation)
 
@@ -105,18 +82,6 @@ gh issue comment [ISSUE] --body "## DEV: Bug fixed
 gh issue edit [ISSUE] --remove-label "bug" --add-label "adlc:done"
 ```
 
-## Model routing for sub-tasks
-
-If you need to spawn utility agents for mechanical work (e.g., add stubs, rename across files, format):
-```
-model: haiku  ← mechanical, no judgment needed
-```
-
-For implementation and QA agents:
-```
-model: sonnet  ← needs judgment
-```
-
 ## Escalation criteria
 
 Escalate to full spec workflow (ba-write-spec) if ANY apply:
@@ -125,12 +90,5 @@ Escalate to full spec workflow (ba-write-spec) if ANY apply:
 - Fix affects public API contract
 - Fix requires changes to multiple features
 - Root cause is architectural
-
-## What you MUST NOT do
-
-- Edit production or test code directly from main conversation
-- Skip spawning dev-agent ("I'll just make this quick fix")
-- Skip spawning qa-agent ("the fix is simple, no need for QA")
-- Use sonnet for mechanical tasks that haiku can handle
 
 </instructions>

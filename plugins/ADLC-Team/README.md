@@ -1,6 +1,21 @@
-# adlc-team v7 — Agent-Driven Lifecycle (Team Edition)
+# adlc-team v7.1 — Agent-Driven Lifecycle (Team Edition)
 
-3 role-based agents, 10 skills, platform-level enforcement. Built for teams of 3-8 people working on the same repo with GitHub Projects.
+3 role-based agents, 8 active skills + 3 deprecated redirects, platform-level enforcement. Built for teams of 3-8 people working on the same repo with GitHub Projects.
+
+## What changed in v7.1 (from v7)
+
+- **~40% token reduction** — Spawn prompts stripped to task-specific context only; TDD rules, verification gates, commit conventions, and report formats are no longer duplicated from agent definitions into every spawn call
+- **3 start skills → 1 smart-start** — `ba-start`, `dev-start`, `qa-start` merged into `smart-start` which loads shared context once and branches by role. Old skills remain as deprecated redirects for backward compatibility.
+- **Removed redundant "MUST NOT" sections** — Platform hooks (enforce-worktree, protect-spec) already enforce these constraints; instruction-level repetition removed from 4 skills
+- **Leaner PR review spawn** — `dev-implement` Step 7 review spawn prompts reduced from ~20 lines to 2 lines each; pr-review-toolkit agents use their own built-in checklists
+
+### Upgrading from v7.0 to v7.1
+
+1. Update the plugin: `/plugin update adlc-team@obacker-claude-code-plugins`
+2. If your project's `CLAUDE.md` references `ba-start`, `dev-start`, or `qa-start`, replace them with `smart-start`
+3. Re-run `adlc-init --force` to update scaffold files (or manually edit `CLAUDE.md` in your project)
+4. No changes needed to `.sdlc/` files, verification.yml, or hooks — all backward compatible
+5. Old `/ba-start`, `/dev-start`, `/qa-start` commands still work (they redirect to smart-start)
 
 ## What changed in v7 (from v6)
 
@@ -46,35 +61,39 @@ adlc-init
 
 ```
 3 agents:   ba-agent (Sonnet) → dev-agent (Sonnet, worktree) → qa-agent (Sonnet, worktree)
-10 skills:  ba-start, ba-write-spec, dev-start, dev-split-tasks, dev-implement, dev-bugfix, qa-start, qa-test-adversarial, shared-explore, shared-write-ui-tests
+8 skills:   smart-start, ba-write-spec, dev-split-tasks, dev-implement, dev-bugfix, qa-test-adversarial, shared-explore, shared-write-ui-tests
+3 deprecated: ba-start, dev-start, qa-start (redirect to smart-start)
 4 hooks:    protect-spec (PreToolUse) + enforce-worktree (PreToolUse) + on-agent-stop (SubagentStop) + save-context (PreCompact/SessionEnd)
 5 companions: pr-review-toolkit, commit-commands, claude-md-management, context7, github
 ```
 
-## Skills by Role
+## Skills
 
-### BA — Business Analyst (2 skills)
+### Session Start (1 skill, replaces 3)
 
 | Skill | Trigger | What it does |
 |---|---|---|
-| `ba-start` | "start working as BA" | Load state, check GitHub Issues needing specs |
+| `smart-start` | "start working", "BA/DEV/QA session" | Auto-detect role, load shared context once, show role-specific dashboard with actionable options |
+
+### BA — Business Analyst (1 skill)
+
+| Skill | Trigger | What it does |
+|---|---|---|
 | `ba-write-spec` | Describe a feature | Clarify → structure options → BDD spec with self-review → approval |
 
-### DEV — Developer (4 skills)
+### DEV — Developer (3 skills)
 
 | Skill | Trigger | What it does |
 |---|---|---|
-| `dev-start` | "start working as DEV" | Detect repo mode (A/B/C/D), surface specs and tasks to pick up |
 | `dev-split-tasks` | "break [FEAT-ID] into tasks" | Approved spec → small atomic tasks (1 AC, max 3 files, inline context) in slices |
 | `dev-implement` | "start implementing" | Create GitHub Issues, plan parallel execution, spawn dev-agents, code review, track progress |
-| `dev-bugfix` | "fix bug" | 6-step fast-track: reproduce → root cause → test → fix → verify → document |
+| `dev-bugfix` | "fix bug" | Fast-track: investigate → spawn dev-agent → spawn qa-agent → document |
 
-### QA — Quality Assurance (2 skills)
+### QA — Quality Assurance (1 skill)
 
 | Skill | Trigger | What it does |
 |---|---|---|
-| `qa-start` | "start working as QA" | Check features ready for QA, plan exploratory tests |
-| `qa-test-adversarial` | "adversarial tests" | Edge cases, security, boundary attacks → findings report |
+| `qa-test-adversarial` | "adversarial tests" | Plan attack vectors → spawn qa-agent → findings report |
 
 ### Shared (2 skills)
 
