@@ -29,6 +29,15 @@ This project uses ADLC v13 for structured feature development.
 8. **Verification gates**: All commands in verification.yml must pass before claiming done.
 9. **Knowledge capture**: Update domain-context.md, domain-terms.md after implementation. Knowledge that isn't written down is lost.
 
+### AI Collaboration Principles
+
+The AI is the hands; the human is the architect. Move fast, but never faster than the human can verify.
+
+1. **Think before coding** — State assumptions out loud. If intent is ambiguous, stop and ask; never guess. When multiple approaches exist, surface the trade-offs — do not silently pick one.
+2. **Simplicity first** — Write the minimum code that solves the stated problem. No extra features, config knobs, or abstractions that weren't requested. 50 lines beats 200 lines if both work.
+3. **Surgical changes** — Only touch code that must change. Do not reformat, re-comment, or "improve" unrelated code. Do not delete legacy code unless asked. Clean up only what you just introduced.
+4. **Define success criteria** — Work in a loop against explicit, user-agreed criteria. Do not declare done until verification gates pass and the criteria are met.
+
 ### Session Discipline
 
 When completing a task, ALWAYS update context files (CLAUDE.md, domain-context.md, ROADMAP.md, etc.) before declaring the session closed. Never skip documentation updates.

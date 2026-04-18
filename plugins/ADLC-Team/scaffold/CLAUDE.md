@@ -33,6 +33,15 @@ This project uses ADLC v7.2 (Agent-Driven Lifecycle) for structured development.
 5. **Verification gates** — All commands in `.sdlc/verification.yml` must pass
 6. **GitHub Issues** — All work tracked via GitHub Issues and Projects
 
+### AI Collaboration Principles
+
+The AI is the hands; the human is the architect. Move fast, but never faster than the human can verify.
+
+1. **Think before coding** — State assumptions out loud. If intent is ambiguous, stop and ask; never guess. When multiple approaches exist, surface the trade-offs — do not silently pick one.
+2. **Simplicity first** — Write the minimum code that solves the stated problem. No extra features, config knobs, or abstractions that weren't requested. 50 lines beats 200 lines if both work.
+3. **Surgical changes** — Only touch code that must change. Do not reformat, re-comment, or "improve" unrelated code. Do not delete legacy code unless asked. Clean up only what you just introduced.
+4. **Define success criteria** — Work in a loop against explicit, user-agreed criteria. Do not declare done until verification gates pass and the criteria are met.
+
 ### Skills
 - `smart-start` — Start a session for any role (BA/DEV/QA) — auto-detects or asks
 - `ba-write-spec` — Write BDD spec for a feature
