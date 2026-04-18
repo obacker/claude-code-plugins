@@ -1,6 +1,6 @@
 {
   "name": "adlc-team",
-  "version": "7.2.0",
+  "version": "7.3.0",
   "description": "Agentic Development Lifecycle v7.2 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 9 skills (smart-start, BA: 1, DEV: 4 incl. cost-report, Shared: 2) + 3 deprecated redirects, GitHub Projects integration. v7.2: RAM + hang + token fixes — consolidated bash PreToolUse hook (replaces 2 Python forks), 10-min spawn timeout + HUNG recovery, max 2 parallel dev-agents, mandatory Haiku routing for mechanical tasks, Opus advisor auto-escalation, task-file-by-reference spawn, progressive disclosure across dev-implement / ba-write-spec / shared-explore, async KNOWLEDGE harvest, PostToolUse compile-check. Requires companion plugins: pr-review-toolkit, commit-commands. Recommended: claude-md-management, context7, github, LSP for your stack.",
   "author": {
     "name": "oBacker",

@@ -13,6 +13,47 @@ This file documents what to do when scaffold files change between versions.
 
 ---
 
+## v2.1.x → v2.2.0
+
+### What changed
+
+`scaffold/CLAUDE.md` gained a new `### AI Collaboration Principles` section
+naming 4 behavioral principles (think before coding, simplicity first, surgical
+changes, define success criteria). Agent prompts got a compact echo of the
+same block.
+
+### Action required: update your project's CLAUDE.md
+
+Find the `### Key Rules` section in your project's `CLAUDE.md`. **Immediately
+after** the numbered list ends (after rule 9 "Knowledge capture"), insert:
+
+```markdown
+### AI Collaboration Principles
+
+The AI is the hands; the human is the architect. Move fast, but never faster than the human can verify.
+
+1. **Think before coding** — State assumptions out loud. If intent is ambiguous, stop and ask; never guess. When multiple approaches exist, surface the trade-offs — do not silently pick one.
+2. **Simplicity first** — Write the minimum code that solves the stated problem. No extra features, config knobs, or abstractions that weren't requested. 50 lines beats 200 lines if both work.
+3. **Surgical changes** — Only touch code that must change. Do not reformat, re-comment, or "improve" unrelated code. Do not delete legacy code unless asked. Clean up only what you just introduced.
+4. **Define success criteria** — Work in a loop against explicit, user-agreed criteria. Do not declare done until verification gates pass and the criteria are met.
+```
+
+No changes needed to `.sdlc/`, `verification.yml`, or hooks — the agent
+prompts inside the plugin carry the same principles automatically after
+`/plugin update`.
+
+### Or: re-run adlc-init
+
+If your `CLAUDE.md` is unmodified from the original scaffold, regenerate it:
+
+```bash
+adlc-init --force
+```
+
+**Warning:** `--force` overwrites — back up customizations first.
+
+---
+
 ## v2.0.x → v2.1.0
 
 ### What changed

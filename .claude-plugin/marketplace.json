@@ -13,7 +13,7 @@
       "name": "adlc-solo",
       "source": "./plugins/ADLC-Solo",
       "description": "Agent-Driven Lifecycle — structured feature development with BDD specs, TDD implementation, automated review, and verification gates. Requires companion plugins: pr-review-toolkit, commit-commands.",
-      "version": "2.0.1",
+      "version": "2.2.0",
       "author": {
         "name": "oBacker"
       },
@@ -28,7 +28,7 @@
       "name": "adlc-team",
       "source": "./plugins/ADLC-Team",
       "description": "Agentic Development Lifecycle v7.2 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 9 skills including weekly cost audit, GitHub Projects integration. v7.2: consolidated bash PreToolUse hook, 10-min spawn timeout + HUNG recovery, max 2 parallel dev-agents, mandatory Haiku routing, Opus advisor escalation, progressive-disclosure skills, async KNOWLEDGE harvest, PostToolUse compile-check.",
-      "version": "7.2.0",
+      "version": "7.3.0",
       "author": {
         "name": "oBacker"
       },
