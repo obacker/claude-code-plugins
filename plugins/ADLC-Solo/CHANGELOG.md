@@ -1,5 +1,29 @@
 # Changelog
 
+## v2.2.0 (2026-04-18)
+
+### Add: AI Collaboration Principles (Karpathy-style)
+
+Names the behavioral expectations the ADLC mechanics already assume but never
+stated explicitly. The principles target common AI-coding failure modes:
+silent assumptions, over-engineering, unrelated refactors, no stopping point.
+
+**Principles:**
+1. **Think before coding** — state assumptions; ask when unclear; surface trade-offs rather than pick silently.
+2. **Simplicity first** — minimum code only; no unrequested flexibility or abstractions.
+3. **Surgical changes** — only touch what must change; no drive-by refactors/reformats.
+4. **Define success criteria** — loop against explicit criteria; verification gates must pass before "done".
+
+**Changes:**
+
+- `scaffold/CLAUDE.md`: new `### AI Collaboration Principles` section, placed between `Key Rules` and `Session Discipline` (100 → 101 lines).
+- `agents/spec-writer.md`, `agents/dev-agent.md`, `agents/qa-spec-checker.md`, `agents/qa-adversarial.md`: short `## Collaboration Principles` block at the top of each agent's instructions with a pointer back to the scaffold CLAUDE.md for the full wording.
+- `.claude-plugin/marketplace.json`: `adlc-solo` entry catches up from `2.0.1` to `2.2.0` (previous drift).
+
+**Impact:** New projects get the principles automatically. Existing projects
+must copy the new section into their `CLAUDE.md` manually — see
+[UPGRADING.md](UPGRADING.md).
+
 ## v2.1.0 (2026-04-11)
 
 ### Fix: Performance env vars now actually set in project settings

@@ -1,5 +1,40 @@
 # UPGRADING — ADLC-Team
 
+## v7.2 → v7.3
+
+Adds the **AI Collaboration Principles** block (4 principles: think before coding, simplicity first, surgical changes, define success criteria) to scaffold `CLAUDE.md` and all 3 agent prompts. Backward-compatible, no mechanical changes.
+
+### Update the plugin
+
+```bash
+/plugin update adlc-team@obacker-claude-code-plugins
+```
+
+Agents (`ba-agent`, `dev-agent`, `qa-agent`) get the principles automatically on update — they live inside the plugin. The only manual action is updating your project's `CLAUDE.md`.
+
+### Action required: update your project's CLAUDE.md
+
+Find the `### Key rules` section. **Immediately after** the numbered list (after rule 6 "GitHub Issues"), insert:
+
+```markdown
+### AI Collaboration Principles
+
+The AI is the hands; the human is the architect. Move fast, but never faster than the human can verify.
+
+1. **Think before coding** — State assumptions out loud. If intent is ambiguous, stop and ask; never guess. When multiple approaches exist, surface the trade-offs — do not silently pick one.
+2. **Simplicity first** — Write the minimum code that solves the stated problem. No extra features, config knobs, or abstractions that weren't requested. 50 lines beats 200 lines if both work.
+3. **Surgical changes** — Only touch code that must change. Do not reformat, re-comment, or "improve" unrelated code. Do not delete legacy code unless asked. Clean up only what you just introduced.
+4. **Define success criteria** — Work in a loop against explicit, user-agreed criteria. Do not declare done until verification gates pass and the criteria are met.
+```
+
+No changes to `.sdlc/`, hooks, verification.yml, or skills.
+
+### Rollback
+
+Revert the plugin to `7.2.0` in your marketplace pin; remove the `### AI Collaboration Principles` section from your project's `CLAUDE.md`.
+
+---
+
 ## v7.1 → v7.2
 
 Driven by team feedback: RAM spikes, 20-min hangs, token waste (especially in DEV skills). Full optimization rationale: `Misc/ADLC-Team-Optimization-Plan.md`.

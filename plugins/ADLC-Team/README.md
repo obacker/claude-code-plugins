@@ -1,6 +1,16 @@
-# adlc-team v7.2 — Agent-Driven Lifecycle (Team Edition)
+# adlc-team v7.3 — Agent-Driven Lifecycle (Team Edition)
 
 3 role-based agents, 9 active skills + 3 deprecated redirects, platform-level enforcement. Built for teams of 3-8 people working on the same repo with GitHub Projects.
+
+## What changed in v7.3 (from v7.2) — AI Collaboration Principles
+
+Scaffold `CLAUDE.md` gains an explicit 4-principle block naming the behaviors that ADLC mechanics already assume but never stated: **think before coding**, **simplicity first**, **surgical changes**, **define success criteria**. These target the common AI-coding failure modes Karpathy has called out — silent assumptions, over-engineering, unrelated refactors, no agreed stopping point.
+
+- `scaffold/CLAUDE.md`: new `### AI Collaboration Principles` section between `Key rules` and `Skills`.
+- `agents/ba-agent.md`, `agents/dev-agent.md`, `agents/qa-agent.md`: short `## Collaboration Principles` echo block at the top of each agent's instructions.
+- No changes to skills, hooks, verification, or workflow. Fully backward-compatible.
+
+Existing projects: copy the new section into your `CLAUDE.md` — see `UPGRADING.md`.
 
 ## What changed in v7.2 (from v7.1) — RAM + hang + token fixes
 

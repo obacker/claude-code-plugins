@@ -2,6 +2,10 @@
 
 Structured feature development for Claude Code: BDD specs, TDD implementation, automated review, and verification gates.
 
+## What's New in v2.2.0
+
+- **AI Collaboration Principles** — scaffold `CLAUDE.md` now carries an explicit 4-principle block that names the behaviors the existing ADLC mechanics (specs, TDD, worktrees, gates) already assume: think before coding, simplicity first, surgical changes, define success criteria. The same block is embedded as a short `Collaboration Principles` section in every agent prompt (spec-writer, dev-agent, qa-spec-checker, qa-adversarial). Existing projects: copy the new section from `scaffold/CLAUDE.md` into your project's `CLAUDE.md` — see [UPGRADING.md](UPGRADING.md).
+
 ## What's New in v2.1.0
 
 - **Performance env vars actually work** — `adlc-init` now writes `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE=75` and `CLAUDE_CODE_MAX_OUTPUT_TOKENS=16000` into `.claude/settings.json`. Previously these were documented in `CLAUDE.md` but never set. Existing projects: see [Upgrading](#upgrading).
@@ -130,6 +134,7 @@ existing projects. See [UPGRADING.md](UPGRADING.md) for per-release instructions
 | From → To | Action required |
 |-----------|-----------------|
 | any → v2.1.0 | Add `env` block to `.claude/settings.json` (see UPGRADING.md) |
+| v2.1.x → v2.2.0 | Copy `AI Collaboration Principles` section into your project's `CLAUDE.md` (see UPGRADING.md) |
 
 ## License
 
