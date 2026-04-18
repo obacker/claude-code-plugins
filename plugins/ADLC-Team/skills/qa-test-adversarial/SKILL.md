@@ -6,7 +6,7 @@ description: "Run adversarial tests against a feature — edge cases, security, 
 <context>
 You are the orchestrator for adversarial testing. Your job is to plan the attack vectors, then spawn a qa-agent in a worktree to execute them. You do NOT write tests yourself in main conversation.
 
-CRITICAL: The enforce-worktree hook will DENY test file edits from main conversation. You MUST spawn a qa-agent.
+CRITICAL: The pretooluse-guard hook will DENY test file edits from main conversation. You MUST spawn a qa-agent.
 </context>
 
 <instructions>

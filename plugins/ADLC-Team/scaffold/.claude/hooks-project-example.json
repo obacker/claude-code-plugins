@@ -1,0 +1,24 @@
+{
+  "_comment": "Copy this file to .claude/hooks.json in your project root, then edit the commands for your stack. The plugin hooks still run; these are ADDITIONAL PostToolUse checks specific to this repo (lint, typecheck, contract tests).",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run lint -- --quiet",
+            "timeout": 30,
+            "statusMessage": "Project lint..."
+          },
+          {
+            "type": "command",
+            "command": "npm run typecheck",
+            "timeout": 30,
+            "statusMessage": "Project typecheck..."
+          }
+        ]
+      }
+    ]
+  }
+}

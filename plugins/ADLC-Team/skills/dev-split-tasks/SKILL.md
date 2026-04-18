@@ -9,33 +9,13 @@ You transform an approved BDD spec into atomic implementation tasks that dev-age
 
 <instructions>
 
-## Step 0 — Guard: verify spec is approved
+## Step 0 + 1 — Shared context load
 
-```bash
-# Check registry for approval
-cat .sdlc/specs/[FEAT-ID]-registry.json | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-approved = data.get('spec_approved_at')
-if not approved:
-    print('BLOCKED: Spec not approved yet. Get BA to approve first.')
-    sys.exit(1)
-print(f'Spec approved at {approved}')
-"
-```
-
-If not approved, stop immediately. Do not proceed.
-
-## Step 1 — Read spec and context
-
-- `.sdlc/specs/[FEAT-ID]-*-spec.md` — the approved spec
-- `.sdlc/domain-terms.md` — terminology
-- `CLAUDE.md` — project structure and stack
-- `.sdlc/verification.yml` — what gates exist
+Run the spec-approval guard and read the standard DEV file set from `skills/_shared/load-sdlc-context.md`. Stop if blocked. Do not duplicate the list here — that file is the single source of truth.
 
 ## Step 2 — Decompose into tasks
 
-Dev-agents are subagents with **limited turns (maxTurns: 40)**. A task that's too large will hit the turn limit and lose work. Err on the side of too small — two trivial tasks are better than one that times out.
+Dev-agents are subagents with **limited turns (maxTurns: 30 as of v7.2)**. A task that's too large will hit the turn limit and lose work. Err on the side of too small — two trivial tasks are better than one that times out.
 
 For each task, define:
 - **Title**: `[FEAT-ID]-T[NNN]: [action verb] [what]`

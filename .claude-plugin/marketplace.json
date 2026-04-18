@@ -27,8 +27,8 @@
     {
       "name": "adlc-team",
       "source": "./plugins/ADLC-Team",
-      "description": "Agentic Development Lifecycle v7.1 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, unified smart-start, GitHub Projects integration. v7.1: ~40% token reduction via spawn prompt deduplication.",
-      "version": "7.1.0",
+      "description": "Agentic Development Lifecycle v7.2 — Team edition. 3 role-based agents (BA/DEV/QA) with platform enforcement, 9 skills including weekly cost audit, GitHub Projects integration. v7.2: consolidated bash PreToolUse hook, 10-min spawn timeout + HUNG recovery, max 2 parallel dev-agents, mandatory Haiku routing, Opus advisor escalation, progressive-disclosure skills, async KNOWLEDGE harvest, PostToolUse compile-check.",
+      "version": "7.2.0",
       "author": {
         "name": "oBacker"
       },

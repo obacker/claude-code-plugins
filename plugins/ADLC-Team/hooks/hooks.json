@@ -6,15 +6,22 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/protect-spec.py",
-            "timeout": 5,
-            "statusMessage": "Checking spec protection..."
-          },
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/pretooluse-guard.sh",
+            "timeout": 3,
+            "statusMessage": "Guarding spec + worktree..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/enforce-worktree.py",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/compile-check.sh",
             "timeout": 5,
-            "statusMessage": "Checking worktree isolation..."
+            "statusMessage": "Compile check..."
           }
         ]
       }
@@ -25,7 +32,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/on-agent-stop.sh",
-            "timeout": 10,
+            "timeout": 5,
             "statusMessage": "Validating agent work..."
           }
         ]
