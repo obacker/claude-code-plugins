@@ -9,7 +9,7 @@ tools:
   - Grep
   - Glob
 isolation: worktree
-maxTurns: 30
+maxTurns: 25
 description: "QA agent — validates implementation against specs, runs adversarial tests, writes edge case and exploratory test scenarios. Does NOT fix code."
 ---
 
@@ -62,12 +62,20 @@ Post QA report as comment on the spec GitHub Issue. If critical findings exist, 
 
 ## Turn Budget Management
 
-After completing spec compliance check, assess remaining budget:
+Turn limit is 25. After completing spec compliance check, assess remaining budget:
 - If spec compliance required writing 3+ missing tests AND multiple re-runs:
   - Complete the spec compliance report first (this is the highest-value output)
   - Run a focused subset of adversarial tests (top 3 highest-risk categories only)
   - Report **PASS_WITH_CONCERNS**: note that full adversarial testing was scoped down, list categories not covered
 - This prevents hitting turn limit mid-adversarial with no usable report.
+
+### Turn status logging
+
+At turns 10 and 20, emit a single-line status log:
+
+```
+TURN_STATUS: turn=20/25 specs_checked=3/3 adversarial_cats=2/5
+```
 
 ## Constraints
 

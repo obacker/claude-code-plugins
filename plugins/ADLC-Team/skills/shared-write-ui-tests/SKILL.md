@@ -6,7 +6,7 @@ description: "Generate Playwright UI tests from BDD scenarios. Shared by DEV (ha
 <context>
 You plan UI tests from BDD acceptance criteria, then spawn an agent in a worktree to write them. DEV mode = happy path, QA mode = edge cases. You do NOT write test code yourself in main conversation.
 
-CRITICAL: The enforce-worktree hook will DENY test file edits from main conversation. You MUST spawn an agent.
+CRITICAL: The pretooluse-guard hook will DENY test file edits from main conversation. You MUST spawn an agent.
 </context>
 
 <instructions>

@@ -1,6 +1,38 @@
-# adlc-team v7.1 — Agent-Driven Lifecycle (Team Edition)
+# adlc-team v7.2 — Agent-Driven Lifecycle (Team Edition)
 
-3 role-based agents, 8 active skills + 3 deprecated redirects, platform-level enforcement. Built for teams of 3-8 people working on the same repo with GitHub Projects.
+3 role-based agents, 9 active skills + 3 deprecated redirects, platform-level enforcement. Built for teams of 3-8 people working on the same repo with GitHub Projects.
+
+## What changed in v7.2 (from v7.1) — RAM + hang + token fixes
+
+Target reductions (see `Misc/ADLC-Team-Optimization-Plan.md`): max hang 20m→10m, peak RAM ~45% down, dev-implement skill ~60% smaller in hot path, sonnet/haiku ratio 95/5 → 60/40, PreToolUse fork count 2→1.
+
+**Hang & timeout**
+- `maxTurns` tightened: dev-agent 40→30, qa-agent 30→25, ba-agent 30→25 — forces graceful `DONE_WITH_CONCERNS` instead of stalling at the ceiling
+- Mandatory 10-minute wall-clock timeout on every agent spawn, with a HUNG recovery path (force-remove worktree, offer split / switch-to-haiku / skip-and-escalate)
+- Turn-status logging at turns 10/20/25 so the orchestrator can see progress
+
+**RAM**
+- Hard cap of **2 parallel dev-agents** (queue any extras)
+- Task files passed to dev-agent by **file path**, not pasted content — single source of truth, no duplication across parallel spawns
+- PR review runs **sequentially** (code-reviewer → pr-test-analyzer), analyzer references code-reviewer output
+- SubagentStop KNOWLEDGE harvest forked to background; hook returns immediately
+
+**Token / cost**
+- `dev-implement` split into a slim orchestrator (~80 lines) + `references/github-ops.md` + `references/spawn-patterns.md` — references only loaded when the specific step runs
+- `_shared/load-sdlc-context.md` replaces duplicated "read these 4 files" blocks across DEV skills
+- `ba-write-spec` and `shared-explore` use progressive disclosure — full templates live under `references/`
+- **Mandatory Haiku routing** for simple / mechanical tasks (renames, stubs, formatting, config bumps, single-line changes)
+- **Advisor escalation pattern** — Orchestrator and agents all default to Sonnet. On architectural decisions, multi-file churn, spec ambiguity, or retry-failed verification, agents exit `DONE_WITH_CONCERNS` tagged `needs-orchestrator-advisor`; the orchestrator then calls its built-in `advisor` tool (Opus-backed) before respawning with tightened constraints. (Previous plan draft used a non-existent `advisor:` YAML key — corrected to an instruction-level pattern that matches Claude Code's supported frontmatter.)
+- New `dev-cost-report` skill for weekly per-feature token + hang audit
+
+**Hooks**
+- 2 Python PreToolUse hooks (`protect-spec.py` + `enforce-worktree.py`) replaced by a single bash wrapper (`pretooluse-guard.sh`) with a fast-path for ADLC artifacts — ~50% fork overhead gone. Old `.py` scripts kept as `.bak` for 30 days.
+- New PostToolUse `compile-check.sh` hook — Go vet / tsc / python syntax check surfaces compile errors within the current TDD cycle. Advisory (never blocks).
+- Project-level hook scaffold at `scaffold/.claude/hooks-project-example.json` for repo-specific lint/typecheck.
+
+### Upgrading from v7.1 to v7.2
+
+See `UPGRADING.md`. No changes required to `.sdlc/` contents, feature registries, or existing specs.
 
 ## What changed in v7.1 (from v7)
 
@@ -60,10 +92,12 @@ adlc-init
 ## Architecture
 
 ```
-3 agents:   ba-agent (Sonnet) → dev-agent (Sonnet, worktree) → qa-agent (Sonnet, worktree)
-8 skills:   smart-start, ba-write-spec, dev-split-tasks, dev-implement, dev-bugfix, qa-test-adversarial, shared-explore, shared-write-ui-tests
+orchestrator: Sonnet (main conversation) — with access to the `advisor` tool for Opus-backed second opinions
+3 agents:    ba-agent (Sonnet) → dev-agent (Sonnet/Haiku, worktree) → qa-agent (Sonnet, worktree)
+             Agents surface architectural / ambiguity decisions; orchestrator calls `advisor` on their behalf.
+9 skills:   smart-start, ba-write-spec, dev-split-tasks, dev-implement, dev-bugfix, dev-cost-report, qa-test-adversarial, shared-explore, shared-write-ui-tests
 3 deprecated: ba-start, dev-start, qa-start (redirect to smart-start)
-4 hooks:    protect-spec (PreToolUse) + enforce-worktree (PreToolUse) + on-agent-stop (SubagentStop) + save-context (PreCompact/SessionEnd)
+4 hooks:    pretooluse-guard (PreToolUse, bash) + compile-check (PostToolUse) + on-agent-stop (SubagentStop, async harvest) + save-context (PreCompact/SessionEnd)
 5 companions: pr-review-toolkit, commit-commands, claude-md-management, context7, github
 ```
 
@@ -81,13 +115,14 @@ adlc-init
 |---|---|---|
 | `ba-write-spec` | Describe a feature | Clarify → structure options → BDD spec with self-review → approval |
 
-### DEV — Developer (3 skills)
+### DEV — Developer (4 skills)
 
 | Skill | Trigger | What it does |
 |---|---|---|
 | `dev-split-tasks` | "break [FEAT-ID] into tasks" | Approved spec → small atomic tasks (1 AC, max 3 files, inline context) in slices |
-| `dev-implement` | "start implementing" | Create GitHub Issues, plan parallel execution, spawn dev-agents, code review, track progress |
+| `dev-implement` | "start implementing" | Create GitHub Issues, plan parallel execution (max 2), spawn dev-agents with timeouts, sequential code review, track progress |
 | `dev-bugfix` | "fix bug" | Fast-track: investigate → spawn dev-agent → spawn qa-agent → document |
+| `dev-cost-report` | "cost report", "weekly cost" | Weekly audit of token burn, sonnet/haiku ratio, hang events, sessions over budget |
 
 ### QA — Quality Assurance (1 skill)
 
@@ -106,8 +141,11 @@ adlc-init
 
 | What | How | Level |
 |------|-----|-------|
-| Spec immutability | `protect-spec.py` PreToolUse hook | **Platform** (denies the action) |
-| Worktree-only code edits | `enforce-worktree.py` PreToolUse hook | **Platform** (denies the action) |
+| Spec immutability | `pretooluse-guard.sh` PreToolUse hook (bash, replaces Python) | **Platform** (denies the action) |
+| Worktree-only code edits | `pretooluse-guard.sh` PreToolUse hook | **Platform** (denies the action) |
+| Spawn timeout & HUNG recovery | 10-min wall-clock per agent (instructed in `spawn-patterns.md`) | **Instruction** |
+| Parallel agent cap | Max 2 dev-agents simultaneous | **Instruction** (dev-implement) |
+| Compile check | `compile-check.sh` PostToolUse hook | **Platform** (advisory) |
 | Worktree isolation | `isolation: worktree` in agent frontmatter | **Platform** (automatic) |
 | Tool restrictions | `tools:` in agent frontmatter | **Platform** (enforced) |
 | Model routing | `model:` in agent frontmatter | **Platform** (enforced) |
@@ -115,7 +153,7 @@ adlc-init
 | Turn budget mgmt | Agents commit + report DONE_WITH_CONCERNS before hitting limit | **Instruction** (graceful exit) |
 | Task sizing | DEV writes 1 AC/task, max 3 files, inline context — fits dev-agent turn budget | **Instruction** (DEV rules) |
 | Knowledge harvesting | `on-agent-stop.sh` SubagentStop hook | **Platform** (automatic) |
-| Mandatory agent spawn | Skills + enforce-worktree hook | **Platform + Instruction** (hook blocks lazy path) |
+| Mandatory agent spawn | Skills + pretooluse-guard hook | **Platform + Instruction** (hook blocks lazy path) |
 | TDD iron law | dev-agent instructions | **Instruction** (strict) |
 | BA self-review | ba-write-spec checklist | **Instruction** (self-check) |
 | Model cost routing | Skill instructions (haiku/sonnet/opus table) | **Instruction** (guidance) |

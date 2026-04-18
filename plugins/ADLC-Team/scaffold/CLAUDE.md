@@ -18,7 +18,7 @@
 
 ## ADLC Workflow
 
-This project uses ADLC v7.1 (Agent-Driven Lifecycle) for structured development.
+This project uses ADLC v7.2 (Agent-Driven Lifecycle) for structured development.
 
 ### Roles
 - **BA** — Writes BDD specs. Self-reviews AC quality before approval.

@@ -8,6 +8,15 @@
 
 ---
 
+> **⚠ Implementation deltas (2026-04-18, post-ship)** — two items in this plan did not ship verbatim after a docs cross-check:
+>
+> 1. **P1-T4 `advisor:` YAML frontmatter** — Claude Code's official subagent frontmatter does not accept an `advisor:` key (supported keys: `name`, `description`, `tools`, `model` (sonnet/opus/haiku/inherit), `skills`, `memory`, `maxTurns`, `permissionMode`, `isolation`, `effort`, `disallowedTools`, `mcpServers`). The intent was preserved as an **instruction-level pattern** in `agents/dev-agent.md` and `agents/ba-agent.md`: agents exit `DONE_WITH_CONCERNS` tagged `needs-orchestrator-advisor` on architectural / ambiguity / retry-failed situations, and `skills/dev-implement/SKILL.md` instructs the orchestrator to call its built-in `advisor` tool before respawning.
+> 2. **Orchestrator model** — The Team edition runs the orchestrator on **Sonnet** (not Opus). The `advisor` tool reaches an Opus reviewer regardless of caller model, so the escalation pattern still delivers stronger reasoning when triggered.
+>
+> All other P0/P1/P2 items shipped as specified. See `plugins/ADLC-Team/UPGRADING.md` for the final behavior.
+
+---
+
 ## 1. Team Feedback — Verbatim
 
 > - Ngốn RAM
