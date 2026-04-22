@@ -28,6 +28,14 @@ Follow `skills/_shared/load-sdlc-context.md` for the standard file set, plus:
 
 For each task file without a corresponding issue, use the `gh issue create` template in `references/github-ops.md`. Record issue numbers in the progress file.
 
+## Step 2b — Write UI happy path tests (if feature has UI)
+
+Before spawning dev-agents, check if this feature touches UI:
+- If yes: invoke `shared-write-ui-tests` in **DEV mode** (happy path only). These Playwright tests serve as implementation targets for TDD.
+- If no UI (pure API/backend feature): skip this step.
+
+Do NOT wait for QA to run `shared-write-ui-tests` in edge-case mode — that is a separate QA step. DEV only covers happy path here.
+
 ## Step 3 — Plan execution
 
 From `slice-plan.md`:
