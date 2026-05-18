@@ -64,12 +64,32 @@ Spawn Agent:
     Classify each finding: CRITICAL / HIGH / MEDIUM / LOW
 ```
 
-## Phase 3 — Assess findings (you do this in main conversation)
+## Phase 3 — Present findings and wait for user confirmation (you do this in main conversation)
 
 Read `.sdlc/reviews/[FEAT-ID]-adversarial-report.md`.
 
-- **No CRITICAL/HIGH findings** → feature is ready for QA. Done.
-- **CRITICAL/HIGH findings exist** → continue to Phase 4.
+Present findings to the user in this format:
+
+```
+## Adversarial test results — [FEAT-ID]
+
+**CRITICAL ([n])**
+- [finding-id] [short description] — [one-line repro]
+
+**HIGH ([n])**
+- [finding-id] [short description] — [one-line repro]
+
+**MEDIUM/LOW ([n])** (will not be auto-fixed)
+- [finding-id] [short description]
+
+Proceed with fixing CRITICAL and HIGH findings? (yes / no / select specific IDs)
+```
+
+**STOP. Wait for user response before continuing.**
+
+- User says **no** or there are no CRITICAL/HIGH → feature is ready for QA. Done.
+- User says **yes** → proceed to Phase 4 with all CRITICAL/HIGH findings.
+- User selects specific IDs → proceed to Phase 4 with only those findings.
 
 ## Phase 4 — Spawn dev-agent to fix all findings (MANDATORY)
 
