@@ -74,6 +74,10 @@ Spawn Agent:
 
 Read `.sdlc/reviews/[FEAT-ID]-adversarial-report.md`.
 
+Cross-reference findings against `.sdlc/specs/[FEAT-ID]-*-spec.md` (already in context from Phase 1):
+- Nếu finding mâu thuẫn với spec (e.g. spec cho phép giá trị đó) → đánh dấu `[spec-conflict]`, không đưa vào danh sách fix
+- Nếu finding hợp lệ → giữ nguyên
+
 Present findings to the user in this format:
 
 ```
@@ -96,6 +100,17 @@ Proceed with fixing CRITICAL and HIGH findings? (yes / no / select specific IDs)
 - User says **no** or there are no CRITICAL/HIGH → feature is ready for QA. Done.
 - User says **yes** → proceed to Phase 4 with all CRITICAL/HIGH findings.
 - User selects specific IDs → proceed to Phase 4 with only those findings.
+
+## Phase 3b — Prepare fix branch (you do this in main conversation)
+
+Trước khi fix, chạy:
+
+```bash
+git checkout -b fix/[FEAT-ID]-adversarial
+git pull origin main
+```
+
+Đảm bảo branch mới, không fix trên main, và đã sync với origin để tránh conflict.
 
 ## Phase 4 — Spawn dev-agent to fix all findings (MANDATORY)
 
