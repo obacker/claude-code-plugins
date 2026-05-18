@@ -4,7 +4,7 @@ description: "Use when DEV has finished implementing a feature and wants to self
 ---
 
 <context>
-You are the orchestrator for DEV-side adversarial self-testing. Plan attack vectors, spawn a qa-agent to discover bugs, then spawn a dev-agent to fix them. You do NOT write test or production code yourself.
+You are the orchestrator for DEV-side adversarial self-testing. Your job: plan attack vectors from the spec, spawn agents to do the actual work. You do NOT read source code, write tests, or edit production code yourself.
 
 CRITICAL: The pretooluse-guard hook will DENY code edits from main conversation. You MUST spawn agents.
 
@@ -13,14 +13,21 @@ This skill SKIPS spec compliance check — DEV already verified all ACs pass via
 
 <instructions>
 
-## Phase 1 — Plan attack vectors (you do this in main conversation)
+## Phase 1 — Classify and plan (you do this in main conversation)
 
-Read:
-- `.sdlc/specs/[FEAT-ID]-*-spec.md` — what was specified
-- Source code for the feature (use Grep to find relevant files)
-- Existing tests (understand what's already covered — skip those attack angles)
+Read ONLY `.sdlc/specs/[FEAT-ID]-*-spec.md`. Do NOT read source code or test files — agents will do that.
 
-For each AC, plan attacks across these categories:
+**Step 1a — Classify feature type** (determines which attack categories to run):
+
+| Feature has... | Run these categories |
+|---|---|
+| Write operations (create/update/delete) | Input attacks + Business logic attacks |
+| Auth / roles / permissions | + Auth/access attacks |
+| File, path, or URL handling | + Path traversal from Input attacks |
+| Concurrent operations or background jobs | + State attacks |
+| Read-only / display only | Input attacks only |
+
+**Step 1b — Plan specific attack vectors** for selected categories only:
 
 **Input attacks:** null, empty, whitespace, 10K+ strings, special chars (`<script>`, SQL injection, path traversal `../`), unicode, emoji, negative numbers, zero, MAX_INT, float precision
 
@@ -42,13 +49,18 @@ Spawn Agent:
     Run adversarial tests for [FEAT-ID].
 
     SKIP spec compliance check — DEV has already verified all ACs pass via TDD.
-    Focus ONLY on adversarial testing.
+    Focus ONLY on these attack categories: [list selected categories from Phase 1]
 
     ## Attack vectors to execute
-    [paste your planned attack vectors from Phase 1]
+    [paste your planned attack vectors from Phase 1b]
+
+    ## Early exit rule
+    If you find 3 or more CRITICAL findings, write the report immediately and stop.
+    Do not continue to remaining categories.
 
     ## Output
     Write report to .sdlc/reviews/[FEAT-ID]-adversarial-report.md
+    For each finding include: severity, reproduction steps, exact test command that fails.
     Classify each finding: CRITICAL / HIGH / MEDIUM / LOW
 ```
 
@@ -56,8 +68,8 @@ Spawn Agent:
 
 Read `.sdlc/reviews/[FEAT-ID]-adversarial-report.md`.
 
-- **No CRITICAL/HIGH findings** → skip to Phase 5, feature ready for QA
-- **CRITICAL/HIGH findings exist** → continue to Phase 4
+- **No CRITICAL/HIGH findings** → feature is ready for QA. Done.
+- **CRITICAL/HIGH findings exist** → continue to Phase 4.
 
 ## Phase 4 — Spawn dev-agent to fix all findings (MANDATORY)
 
@@ -83,41 +95,49 @@ Spawn Agent:
 
     Do NOT touch passing tests. Do NOT fix MEDIUM/LOW unless trivial.
     Commit prefix: fix([FEAT-ID]-adversarial)
+
+    When done, output a one-line summary per finding:
+    FIXED: [finding-id] | [test file:line] | [command to verify]
 ```
 
 Apply the **Timeout policy** from `../dev-implement/references/spawn-patterns.md` (10-minute wall-clock).
 
-## Phase 5 — Single verify pass (MANDATORY)
+## Phase 5 — Targeted verify pass (MANDATORY)
 
-After dev-agent completes with DONE, spawn ONE qa-agent to re-test all fixed vectors together.
+After dev-agent completes with DONE, extract from its output:
+- The exact test file paths it modified
+- The exact verify commands per finding
+
+Spawn ONE qa-agent with that targeted context — no exploration needed:
 
 ```
 Spawn Agent:
   type: qa-agent
-  model: sonnet
+  model: haiku
   isolation: worktree
   prompt: |
-    Verify adversarial fixes for [FEAT-ID].
-    DEV fixed these findings: [list finding IDs + one-line fix summary from dev-agent report]
+    Verify adversarial fixes for [FEAT-ID]. Do NOT explore the codebase.
 
-    Re-run ONLY the vectors that previously failed.
-    SKIP spec compliance check.
-    Report: PASS or FAIL with evidence per finding.
+    Run these exact commands and report PASS/FAIL per finding:
+    [paste the "FIXED: ..." lines from dev-agent output verbatim]
+
+    SKIP spec compliance check. Stop after running all commands.
 ```
 
-**If PASS** → feature is ready to submit for QA. Done.
+**If all PASS** → feature is ready for QA. Done.
 
-**If FAIL** → return to Phase 4 with remaining failures. Max 1 re-loop. If still failing after 2 loops, escalate to `dev-bugfix` for root cause analysis.
+**If any FAIL** → return to Phase 4 with only the failing findings. Max 1 re-loop.
+If still failing after 2 loops, escalate to `dev-bugfix` for root cause analysis.
 
 ## Phase 6 — Hand off to QA
 
 No GitHub labels or comments needed — this is a DEV-internal pre-QA step.
-Leave the spec issue as-is. QA will run their own `qa-test-adversarial` pass afterward as the independent final gate.
+Leave the spec issue as-is. QA runs their own `qa-test-adversarial` as the independent final gate.
 
 </instructions>
 
 <documents>
-- `.sdlc/specs/[FEAT-ID]-*-spec.md`
-- `.sdlc/reviews/[FEAT-ID]-adversarial-report.md` — output
-- `../dev-implement/references/spawn-patterns.md` — timeout policy, model routing
+- `.sdlc/specs/[FEAT-ID]-*-spec.md` — only file orchestrator reads
+- `.sdlc/reviews/[FEAT-ID]-adversarial-report.md` — output from Phase 2
+- `../dev-implement/references/spawn-patterns.md` — timeout policy
 </documents>
