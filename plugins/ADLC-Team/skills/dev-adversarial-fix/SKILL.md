@@ -13,6 +13,12 @@ This skill SKIPS spec compliance check — DEV already verified all ACs pass via
 
 <instructions>
 
+## Bước 0 — Hỏi user
+
+Hỏi: **"Bạn muốn kiểm tra task/spec nào? (nhập FEAT-ID)"**
+
+STOP. Chờ user trả lời. Sau đó dùng FEAT-ID đó cho tất cả các bước phía dưới.
+
 ## Phase 1 — Classify and plan (you do this in main conversation)
 
 Read ONLY `.sdlc/specs/[FEAT-ID]-*-spec.md`. Do NOT read source code or test files — agents will do that.
