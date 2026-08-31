@@ -85,7 +85,7 @@ Measured with tiktoken `cl100k_base`.
 | Item | v2.3.0 | v3.0.0 |
 |---|---|---|
 | `scaffold/CLAUDE.md`, re-injected into every subagent spawn | 1344 | 346 |
-| Always-on plugin metadata (skill and agent names plus descriptions, plus the plugin description) | 485 | 230 |
+| Always-on plugin metadata (skill and agent names plus descriptions, plus the plugin description) | 485 | 209 |
 | Per-spawn context floor (CLAUDE.md + domain-context + domain-terms + verification.yml) | 2167 | 1169 |
 | One feature run, 5 dev tasks: system prompt and context floor before any real work | 32506 | not applicable; there is no agent chain |
 
