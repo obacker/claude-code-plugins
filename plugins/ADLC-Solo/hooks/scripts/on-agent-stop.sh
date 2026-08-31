@@ -11,6 +11,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Read hook input from stdin
 INPUT=$(cat)
 
@@ -113,5 +115,46 @@ case "$AGENT_NAME" in
         log_event "INFO: completed with exit code $EXIT_CODE"
         ;;
 esac
+
+# ── Async KNOWLEDGE harvest (backgrounded — hook returns immediately) ────────
+# The agent's own report is the only place discoveries are written down before
+# the transcript is compacted away. Harvest them into CAPTURES.md so they
+# survive. This does file I/O and must not delay the next tool call, so it is
+# forked and disowned.
+harvest_knowledge() {
+    local capture_dir=".sdlc/_active"
+    local capture_file="$capture_dir/CAPTURES.md"
+    mkdir -p "$capture_dir"
+
+    local discoveries
+    discoveries=$(printf '%s' "$INPUT" | python3 "$SCRIPT_DIR/_harvest_discoveries.py" 2>/dev/null || true)
+
+    [[ -z "$discoveries" ]] && return 0
+
+    # Dedupe on the first content line so re-runs do not stack duplicates.
+    local fingerprint
+    fingerprint=$(printf '%s' "$discoveries" | head -1 | tr -d '[:space:]' | cut -c1-40)
+    if [[ -n "$fingerprint" ]] && [[ -f "$capture_file" ]]; then
+        # Strip whitespace on both sides of the comparison — the fingerprint is
+        # whitespace-free, so the file content must be too or nothing matches.
+        # `--` is required: discovery lines start with "-", which grep would
+        # otherwise parse as a flag.
+        if tr -d '[:space:]' < "$capture_file" | grep -qF -- "$fingerprint"; then
+            return 0
+        fi
+    fi
+
+    {
+        echo ""
+        echo "### [$TIMESTAMP] $AGENT_NAME"
+        echo "$discoveries"
+    } >> "$capture_file"
+
+    echo "[$TIMESTAMP] [$AGENT_NAME] INFO: harvested discoveries to CAPTURES.md" >> "$LOG_FILE"
+}
+
+# Fork to background, detach, return immediately.
+( harvest_knowledge > /dev/null 2>&1 ) &
+disown 2>/dev/null || true
 
 exit 0

@@ -10,3 +10,6 @@ __pycache__/
 
 # ADLC runtime artifacts (generated at runtime, not part of plugin source)
 plugins/*/.sdlc/
+# Root-level .sdlc/ is runtime state too (agent-log.txt, context-snapshot.md,
+# enforcement flags) — never plugin source.
+/.sdlc/

@@ -40,7 +40,12 @@ When spawning agents, choose the model based on task complexity:
 
 1. Create `.sdlc/` directory if it doesn't exist
 2. Create `.sdlc/.enforce-worktree` flag file (activates the PreToolUse hook that blocks production code edits on main)
-3. This flag is removed in Phase 5 after completion
+3. Create `.sdlc/.bugfix-active` flag file (activates the PreToolUse hook that locks EXISTING test files; creating NEW test files stays allowed)
+4. **Both flags MUST be removed before this skill ends — on every exit path**, including aborts in Phase 3 and Phase 4, not just successful completion in Phase 5. A leftover `.bugfix-active` silently blocks all test edits in the next session.
+
+> Why the test lock: the failure mode this guards against is a bugfix that
+> edits the failing test until it passes instead of fixing the defect. The
+> RED step still works — a new test file is never blocked.
 
 ### Phase 1: Root Cause Investigation (Orchestrator — you)
 
@@ -109,7 +114,8 @@ This report is the dev-agent's input. Writing it forces clear thinking.
    - **DONE**: proceed to Phase 4
    - **DONE_WITH_CONCERNS**: note concerns, proceed to Phase 4
    - **NEEDS_CONTEXT**: provide context, re-spawn dev-agent
-   - **BLOCKED**: after 3 re-attempts → STOP, report to user:
+   - **BLOCKED**: after 3 re-attempts → **remove `.sdlc/.enforce-worktree` and
+     `.sdlc/.bugfix-active` first**, then STOP and report to user:
      "Root cause may be different than hypothesized. Evidence: [...]"
 
 ### Phase 4: QA Validation (qa-adversarial — MANDATORY)
@@ -129,7 +135,8 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 
 2. If qa-adversarial reports FAIL:
    - Re-spawn dev-agent with qa-adversarial's findings
-   - Loop max 2 times. Still failing → report to user.
+   - Loop max 2 times. Still failing → **remove `.sdlc/.enforce-worktree` and
+     `.sdlc/.bugfix-active` first**, then report to user.
 
 ### Phase 5: Verify & Complete
 
@@ -140,8 +147,9 @@ This report is the dev-agent's input. Writing it forces clear thinking.
    - **domain-terms.md**: Did terminology confusion contribute to the bug? If yes, clarify the term.
    - **Auto-memory**: Save the root cause pattern if it's likely to recur (e.g., "timezone handling in X module assumes UTC but receives local time"). Skip if the fix is self-explanatory from the code.
    - If nothing non-obvious was learned: skip all updates (don't write for the sake of writing)
-4. Remove `.sdlc/.enforce-worktree` flag file (deactivates enforcement)
-5. Present bugfix report to user
+4. Remove `.sdlc/.enforce-worktree` and `.sdlc/.bugfix-active` flag files (deactivates enforcement)
+5. Confirm both are gone: `ls -a .sdlc/` should list neither
+6. Present bugfix report to user
 
 ## Anti-Rationalization List
 
@@ -153,6 +161,8 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 - "Too simple for a worktree" → Isolation is not about complexity. It's about safety and discipline.
 - "Skip QA, tests already pass" → Tests passing ≠ fix is correct. QA finds what you missed.
 - "Just one quick edit on main" → One exception becomes the norm. Use the worktree.
+- "The test is wrong, I'll just adjust it" → That is the exact failure this skill exists to prevent. A test that predates the bug is evidence. If it is genuinely wrong, that is a spec change — stop and say so.
+- "I'll clean up the flags later" → There is no later. Remove them on the path you are on.
 
 ## Output
 
@@ -192,4 +202,6 @@ This report is the dev-agent's input. Writing it forces clear thinking.
 - If the bug relates to an existing milestone: update feature-registry.json if relevant ACs were affected
 - If the bug reveals a missing AC: note it but don't modify milestone-spec.md (suggest adding in next milestone)
 - Never "fix" by disabling or skipping a test
+- Never edit an existing test to make the fix pass — write a NEW failing test instead
+- Never leave `.sdlc/.bugfix-active` behind — it blocks test edits in every later session
 - If fix attempt fails 3 times: STOP and question the hypothesis, not attempt fix #4

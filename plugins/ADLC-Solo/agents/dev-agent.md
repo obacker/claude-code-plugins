@@ -125,6 +125,19 @@ After completing each TDD cycle, assess remaining work:
   - Orchestrator will spawn a new dev-agent for remaining work
 - This prevents losing work if you hit the turn limit mid-cycle.
 
+## Cloud-Safe Git
+
+Claude Code cloud sessions differ from local ones in two ways that break naive
+git usage:
+
+- **Chained git commands are rejected.** The cloud auto-mode classifier refuses
+  `git add . && git commit -m "x" && git push`. Run each as its own Bash
+  invocation: `git add .`, then `git commit -m "x"`, then `git push`. This is
+  not a style preference — the chained form fails outright.
+- **`gh` is not installed.** Never assume it exists. If a step needs `gh`,
+  check first with `command -v gh` and, when absent, report what could not be
+  done and continue with the rest of the task rather than failing.
+
 ## Hard Rules
 
 - Never modify files outside task scope
@@ -132,6 +145,7 @@ After completing each TDD cycle, assess remaining work:
 - Never skip writing tests — there are no exceptions
 - If AC seems wrong or impossible: STOP, report BLOCKED, do NOT change spec
 - Use exact terminology from domain-terms.md
+- Never chain git commands with `&&` — one git invocation per Bash call
 
 ## Memory
 
