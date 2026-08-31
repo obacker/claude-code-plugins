@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# hook-matrix.sh — behavioral test matrix for the ADLC-Solo PreToolUse guards.
+# hook-matrix.sh: behavioral test matrix for the ADLC-Solo PreToolUse guards.
 #
 # v3 registers exactly two guards, both on matcher "Edit|Write|Bash":
 # guard-test-lock.py and guard-migrations.py. This matrix builds a throwaway
@@ -62,7 +62,7 @@ func TestMain_Smoke(t *testing.T) {}
 EOF
     echo "# Fixture" > README.md
 
-    # verification.yml WITHOUT a migrations block — migrations guard starts inert.
+    # verification.yml WITHOUT a migrations block; migrations guard starts inert.
     cat > verification.yml <<'EOF'
 post_task:
   - name: "Build"
