@@ -2,18 +2,15 @@
 """
 Shared path predicates for ADLC-Solo PreToolUse guards.
 
-Single source of truth for the exemption rules so the Edit/Write guard
-(enforce-worktree.py) and the Bash guard (guard-bash-write.py) cannot drift
-apart. Every consumer imports from here with a try/except fallback — a hook
-must never hard-fail on an import error.
+Single source of truth for the path predicates, so guard-test-lock.py and
+guard-migrations.py cannot drift apart on what counts as a test file, an
+.sdlc/ file, or a project-relative path. Every consumer imports from here
+with a try/except fallback; a hook must never hard-fail on an import error.
 
 Nothing here raises. Predicates answer conservatively (allow) on bad input.
 """
 
-import glob
-import json
 import os
-import subprocess
 
 # Directory names that mark a path as test/spec/mock/fixture territory.
 TEST_DIR_INDICATORS = (
@@ -85,96 +82,12 @@ def is_test_path(file_path):
     return False
 
 
-def is_exempt_from_worktree(file_path):
-    """
-    Exemption rules for worktree enforcement.
-
-    Exempt: .sdlc/ files, markdown, test/spec/mock/fixture paths.
-    An empty path is exempt (nothing to enforce against).
-    """
-    normalized = normalize(file_path)
-    if not normalized:
-        return True
-
-    if is_sdlc_path(normalized):
-        return True
-
-    if normalized.endswith(".md"):
-        return True
-
-    if is_test_path(normalized):
-        return True
-
-    return False
-
-
-def is_in_worktree(cwd=None):
-    """True if cwd is inside a git worktree (not the main working tree)."""
-    try:
-        git_dir = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
-            capture_output=True, text=True, timeout=5, cwd=cwd
-        ).stdout.strip()
-        return "worktrees/" in git_dir
-    except Exception:
-        return False
-
-
 def flag_active(flag_name):
     """True if the named opt-in flag file exists under .sdlc/."""
     try:
         return os.path.exists(os.path.join(".sdlc", flag_name))
     except Exception:
         return False
-
-
-def is_spec_file(file_path):
-    """True if the target is a milestone spec (milestone-spec.md or *-spec.md)."""
-    normalized = normalize(file_path)
-    if not normalized:
-        return False
-    basename = os.path.basename(normalized)
-    return basename == "milestone-spec.md" or basename.endswith("-spec.md")
-
-
-def is_spec_approved_for_file(file_path):
-    """
-    True if the file sits under a milestone whose feature-registry.json has
-    spec_approved_at set.
-    """
-    normalized = normalize(file_path)
-    if not normalized:
-        return False
-
-    try:
-        registries = glob.glob(".sdlc/milestones/*/feature-registry.json")
-    except Exception:
-        return False
-    if not registries:
-        return False
-
-    try:
-        target = os.path.abspath(normalized)
-        target_dir = os.path.dirname(target)
-    except Exception:
-        return False
-
-    for registry_path in registries:
-        try:
-            registry_dir = os.path.dirname(os.path.abspath(registry_path))
-        except Exception:
-            continue
-
-        if target_dir == registry_dir or target.startswith(registry_dir + os.sep):
-            try:
-                with open(registry_path, "r") as f:
-                    data = json.load(f)
-                if data.get("spec_approved_at"):
-                    return True
-            except (json.JSONDecodeError, FileNotFoundError, OSError, ValueError):
-                continue
-
-    return False
 
 
 def deny(reason):

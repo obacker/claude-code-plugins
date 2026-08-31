@@ -13,6 +13,92 @@ This file documents what to do when scaffold files change between versions.
 
 ---
 
+## v2.x -> v3.0.0
+
+v3 is a deliberate simplification, not a bug-fix release. Nothing in your
+project is migrated automatically, and nothing in your project is deleted.
+
+### 1. Commands were renamed
+
+| v2.x | v3.0.0 |
+|---|---|
+| `/adlc-solo:build-feature` | `/adlc-solo:feature` |
+| `/adlc-solo:bugfix` | `/adlc-solo:bugfix` (unchanged name, rewritten body) |
+| `/adlc-solo:review-slice` | `/adlc-solo:ship` |
+| `/adlc-solo:plan-milestone`, `/adlc-solo:plan-slice` | plan mode, no skill |
+| `/adlc-solo:explore` | the built-in `Explore` subagent, no skill |
+| `/adlc-solo:start-session` | native compaction and checkpointing, no skill |
+| `/adlc-solo:adlc` | the model routes on skill descriptions, no router |
+
+All three surviving skills carry `disable-model-invocation: true`, so they only
+run when you invoke them by name.
+
+### 2. `.sdlc/milestones/` is left alone
+
+v3 does not produce or read `milestone-spec.md` or `feature-registry.json`.
+Existing files under `.sdlc/milestones/` are **ignored, not migrated, and not
+deleted**. Leaving them costs nothing. Delete them yourself if you want the
+directory gone.
+
+`adlc-init` no longer creates `.sdlc/milestones/` for new projects.
+
+### 3. Delete `.sdlc/.enforce-worktree` if you have one
+
+```bash
+rm -f .sdlc/.enforce-worktree
+```
+
+Worktree isolation is removed in v3; `enforce-worktree.py` is deleted, so the
+flag file has no effect. Removing it avoids confusion later. The same applies
+to spec immutability: `protect-spec.py` is gone and was never flag-gated.
+
+`.sdlc/.enforce-migrations` and `.sdlc/.bugfix-active` still work exactly as
+before.
+
+### 4. Your project-level `.claude/settings.json` does not need changing
+
+A `.claude/settings.json` written by an older `adlc-init` still works. Its
+`PostToolUse` compile check and `PreCompact` build validation are project-level
+hooks, independent of the plugin, and v3 deliberately leaves that compile check
+where it is rather than shipping it in the plugin.
+
+If you vendored the plugin with `adlc-init --vendor`, re-run it after upgrading
+so `.claude/` picks up the reduced hook set, then commit `.claude/`:
+
+```bash
+adlc-init --vendor
+git add .claude
+git commit -m "chore: re-vendor ADLC v3"
+```
+
+Stale entries for deleted hooks may remain in `.claude/settings.json`; the
+vendor merge adds but does not remove. Delete any `hooks` entry whose command
+names `protect-spec.py`, `enforce-worktree.py`, `guard-bash-write.py`,
+`post-edit-compile-check.py`, `on-agent-stop.sh` or `save-context.sh` from the
+plugin path, and delete the corresponding files under `.claude/hooks/scripts/`.
+
+### 5. Optional: shrink your project's `CLAUDE.md`
+
+`scaffold/CLAUDE.md` went from 1344 to 346 tokens (tiktoken `cl100k_base`).
+Your project's `CLAUDE.md` is yours and is not touched by the upgrade.
+
+If you want the smaller version, the sections v3 removed are: "ADLC Key Rules",
+"Session Discipline", "ADLC Process Compliance", "Parallel Agent Isolation",
+"Project-Level Hooks", "Performance Configuration", and "AI Collaboration
+Principles". The last one is compressed into a four-line "Working agreement".
+
+Before deleting a section, check whether it holds a project-specific convention
+the model actually relies on. If so, move that one line into the Conventions
+section rather than losing it.
+
+Compare against the new template:
+
+```bash
+diff CLAUDE.md "$(dirname "$(command -v adlc-init)")/../scaffold/CLAUDE.md"
+```
+
+---
+
 ## v2.2.x → v2.3.0
 
 ### 1. Check whether you actually have a `.claude/settings.json` (most projects: no)

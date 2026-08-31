@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # ============================================================================
-# hook-matrix.sh — behavioral test matrix for the ADLC-Solo PreToolUse guards.
+# hook-matrix.sh: behavioral test matrix for the ADLC-Solo PreToolUse guards.
 #
-# Builds a throwaway git repo (approved spec + worktree + opt-in flags), feeds
-# real hook JSON on stdin to the same set of hooks that hooks.json registers
-# for each tool, and asserts the allow/deny decision.
+# v3 registers exactly two guards, both on matcher "Edit|Write|Bash":
+# guard-test-lock.py and guard-migrations.py. This matrix builds a throwaway
+# git repo, feeds real hook JSON on stdin to both, and asserts the allow/deny
+# decision for each case.
 #
 # Whitespace note: python json.dumps emits `": "` with a space, bash printf
 # emits `":"` without. Every decision is matched against output with ALL
@@ -34,7 +35,6 @@ ROWS=()
 # ---------------------------------------------------------------------------
 TMP_ROOT="$(mktemp -d)"
 REPO="$TMP_ROOT/repo"
-WORKTREE="$TMP_ROOT/wt"
 
 cleanup() { rm -rf "$TMP_ROOT"; }
 trap cleanup EXIT
@@ -46,7 +46,7 @@ build_fixture() {
     git config user.email "test@example.com"
     git config user.name "hook-matrix"
 
-    mkdir -p src .sdlc/milestones/M1 db/migrations
+    mkdir -p src .sdlc db/migrations
 
     cat > src/main.go <<'EOF'
 package main
@@ -62,38 +62,15 @@ func TestMain_Smoke(t *testing.T) {}
 EOF
     echo "# Fixture" > README.md
 
-    cat > .sdlc/milestones/M1/milestone-spec.md <<'EOF'
-# Milestone M1
-
-## AC-1
-Given a thing, when it happens, then it works.
-EOF
-
-    # spec_approved_at set — this is what makes the spec immutable.
-    cat > .sdlc/milestones/M1/feature-registry.json <<'EOF'
-{
-  "milestone_id": "M1",
-  "spec_approved_at": "2026-01-01T00:00:00Z",
-  "acceptance_criteria": [
-    {"id": "AC-1", "passes": false}
-  ]
-}
-EOF
-
-    # verification.yml WITHOUT a migrations block — migrations guard starts inert.
+    # verification.yml WITHOUT a migrations block; migrations guard starts inert.
     cat > verification.yml <<'EOF'
 post_task:
   - name: "Build"
     command: "go build ./..."
 EOF
 
-    # Opt-in flag for worktree enforcement. Committed so the worktree gets it.
-    touch .sdlc/.enforce-worktree
-
     git add -A
     git commit -q -m "fixture"
-
-    git worktree add -q -b feature/test "$WORKTREE" >/dev/null 2>&1
 }
 
 # ---------------------------------------------------------------------------
@@ -126,13 +103,14 @@ run_hook() {
     fi
 }
 
-# Decision for an Edit/Write, running exactly the hooks hooks.json registers
-# for the Edit|Write and Edit|Write|Bash matchers.
-decide_edit() {
-    local cwd="$1" file_path="$2"
-    local payload
-    payload=$(make_payload "Edit" "file_path" "$file_path")
-    for hook in protect-spec.py enforce-worktree.py guard-migrations.py guard-test-lock.py; do
+# Both registered guards share one matcher, so Edit and Bash run the same pair.
+REGISTERED_HOOKS=(guard-test-lock.py guard-migrations.py)
+
+decide() {
+    local cwd="$1" tool="$2" key="$3" value="$4"
+    local payload hook
+    payload=$(make_payload "$tool" "$key" "$value")
+    for hook in "${REGISTERED_HOOKS[@]}"; do
         if [[ "$(run_hook "$hook" "$cwd" "$payload")" == "deny" ]]; then
             echo "deny"; return
         fi
@@ -140,18 +118,8 @@ decide_edit() {
     echo "allow"
 }
 
-# Decision for a Bash command, running the Bash and Edit|Write|Bash matchers.
-decide_bash() {
-    local cwd="$1" command="$2"
-    local payload
-    payload=$(make_payload "Bash" "command" "$command")
-    for hook in guard-bash-write.py guard-migrations.py guard-test-lock.py; do
-        if [[ "$(run_hook "$hook" "$cwd" "$payload")" == "deny" ]]; then
-            echo "deny"; return
-        fi
-    done
-    echo "allow"
-}
+decide_edit() { decide "$1" "Edit" "file_path" "$2"; }
+decide_bash() { decide "$1" "Bash" "command" "$2"; }
 
 # assert <context> <tool> <subject> <expected> <actual>
 assert_row() {
@@ -176,68 +144,53 @@ check_bash() { assert_row "$1" "Bash" "$3" "$4" "$(decide_bash "$2" "$3")"; }
 # ---------------------------------------------------------------------------
 build_fixture
 
-# --- Core matrix (the acceptance criteria) --------------------------------
-check_edit "main"     "$REPO" ".sdlc/milestones/M1/milestone-spec.md" "deny"
-check_edit "main"     "$REPO" "src/main.go"                           "deny"
-check_edit "main"     "$REPO" "src/main_test.go"                      "allow"
-check_edit "main"     "$REPO" "README.md"                             "allow"
-check_bash "main"     "$REPO" "cat > src/main.go"                     "deny"
-check_bash "main"     "$REPO" "cat > src/x_test.go"                   "allow"
-check_bash "main"     "$REPO" "npm install"                           "allow"
-check_bash "main"     "$REPO" "go mod tidy"                           "allow"
-check_edit "worktree" "$WORKTREE" "src/main.go"                       "allow"
-check_bash "worktree" "$WORKTREE" "cat > src/main.go"                 "allow"
+# --- No flags: both guards inert, everything is allowed --------------------
+check_edit "no-flags" "$REPO" "src/main.go"                            "allow"
+check_edit "no-flags" "$REPO" "src/main_test.go"                       "allow"
+check_edit "no-flags" "$REPO" "README.md"                              "allow"
+check_bash "no-flags" "$REPO" "cat > src/main.go"                      "allow"
+check_bash "no-flags" "$REPO" "cat > src/main_test.go"                 "allow"
+check_bash "no-flags" "$REPO" "npm install"                            "allow"
+check_bash "no-flags" "$REPO" "go mod tidy"                            "allow"
 
-# --- Absolute paths (what Claude Code actually sends) ---------------------
-check_edit "main"     "$REPO" "$REPO/src/main.go"                     "deny"
-check_edit "main"     "$REPO" "$REPO/src/main_test.go"                "allow"
-
-# --- Bash bypass shapes (F7) ----------------------------------------------
-check_bash "main" "$REPO" "tee src/main.go < /dev/null"               "deny"
-check_bash "main" "$REPO" "sed -i 's/a/b/' src/main.go"               "deny"
-check_bash "main" "$REPO" "echo x >> src/main.go"                     "deny"
-check_bash "main" "$REPO" "cp /etc/hostname src/main.go"              "deny"
-check_bash "main" "$REPO" "dd if=/dev/zero of=src/main.go"            "deny"
-check_bash "main" "$REPO" "python3 -c \"open('src/main.go','w')\""    "deny"
-check_bash "main" "$REPO" "cat > .sdlc/milestones/M1/milestone-spec.md" "deny"
-
-# --- Fail-open: unresolvable targets must be allowed, never denied --------
-check_bash "main" "$REPO" 'echo x > $TARGET'                          "allow"
-check_bash "main" "$REPO" 'echo x > $(mktemp)'                        "allow"
-check_bash "main" "$REPO" "go test ./... > /dev/null 2>&1"            "allow"
-check_bash "main" "$REPO" "sed -n '1,5p' src/main.go"                 "allow"
-# Heredoc body containing a `>` must not be parsed as a redirection.
-check_bash "main" "$REPO" "$(printf 'cat > README.md <<EOF\nif a > b\nEOF')" "allow"
-
-# --- no-flag: enforcement off means everything is allowed ------------------
-mv "$REPO/.sdlc/.enforce-worktree" "$TMP_ROOT/.flag-parked"
-check_edit "no-flag" "$REPO" "src/main.go"                            "allow"
-check_bash "no-flag" "$REPO" "cat > src/main.go"                      "allow"
-# Spec immutability is NOT flag-gated — it holds on both paths regardless.
-check_edit "no-flag" "$REPO" ".sdlc/milestones/M1/milestone-spec.md"  "deny"
-check_bash "no-flag" "$REPO" "cat > .sdlc/milestones/M1/milestone-spec.md" "deny"
-mv "$TMP_ROOT/.flag-parked" "$REPO/.sdlc/.enforce-worktree"
-
-# --- C7b: test lock during bugfix -----------------------------------------
-# Flag absent first: editing an existing test is allowed.
-check_edit "no-bugfix" "$REPO" "src/main_test.go"                     "allow"
-
+# --- Test lock during bugfix ----------------------------------------------
 touch "$REPO/.sdlc/.bugfix-active"
-check_edit "bugfix"  "$REPO" "src/main_test.go"                       "deny"
-check_edit "bugfix"  "$REPO" "src/new_test.go"                        "allow"
-check_bash "bugfix"  "$REPO" "cat > src/main_test.go"                 "deny"
-check_bash "bugfix"  "$REPO" "cat > src/new_test.go"                  "allow"
-check_bash "bugfix"  "$REPO" "sed -i 's/a/b/' src/main_test.go"       "deny"
-# Non-test files are untouched by this guard (worktree guard still applies).
-check_edit "bugfix"  "$REPO" "README.md"                              "allow"
+
+# Existing test file is locked; a NEW test file is the RED step and stays open.
+check_edit "bugfix" "$REPO" "src/main_test.go"                         "deny"
+check_edit "bugfix" "$REPO" "src/new_test.go"                          "allow"
+# Absolute paths are what Claude Code actually sends.
+check_edit "bugfix" "$REPO" "$REPO/src/main_test.go"                   "deny"
+check_edit "bugfix" "$REPO" "$REPO/src/new_test.go"                    "allow"
+# Production code and docs are not this guard's business.
+check_edit "bugfix" "$REPO" "src/main.go"                              "allow"
+check_edit "bugfix" "$REPO" "README.md"                                "allow"
+
+# Bash bypass shapes must reach the same decision as the Edit path.
+check_bash "bugfix" "$REPO" "cat > src/main_test.go"                   "deny"
+check_bash "bugfix" "$REPO" "cat > src/new_test.go"                    "allow"
+check_bash "bugfix" "$REPO" "tee src/main_test.go < /dev/null"         "deny"
+check_bash "bugfix" "$REPO" "sed -i 's/a/b/' src/main_test.go"         "deny"
+check_bash "bugfix" "$REPO" "echo x >> src/main_test.go"               "deny"
+check_bash "bugfix" "$REPO" "cp /etc/hostname src/main_test.go"        "deny"
+check_bash "bugfix" "$REPO" "dd if=/dev/zero of=src/main_test.go"      "deny"
+check_bash "bugfix" "$REPO" "python3 -c \"open('src/main_test.go','w')\"" "deny"
+
+# Fail-open: unresolvable targets are allowed, never denied.
+check_bash "bugfix" "$REPO" 'echo x > $TARGET'                         "allow"
+check_bash "bugfix" "$REPO" 'echo x > $(mktemp)'                       "allow"
+check_bash "bugfix" "$REPO" "go test ./... > /dev/null 2>&1"           "allow"
+check_bash "bugfix" "$REPO" "sed -n '1,5p' src/main_test.go"           "allow"
+# A heredoc body containing a `>` must not be parsed as a redirection.
+check_bash "bugfix" "$REPO" "$(printf 'cat > README.md <<EOF\nif a > b\nEOF')" "allow"
+
 rm -f "$REPO/.sdlc/.bugfix-active"
 
-# --- C7a: migration guard --------------------------------------------------
-# Park the worktree flag: migration rows must isolate the migration guard.
-# Migration files are production code, so enforce-worktree would deny them all
-# from the main checkout and mask what this section is actually testing.
-mv "$REPO/.sdlc/.enforce-worktree" "$TMP_ROOT/.flag-parked"
+# Flag gone -> inert again.
+check_edit "no-bugfix" "$REPO" "src/main_test.go"                      "allow"
+check_bash "no-bugfix" "$REPO" "cat > src/main_test.go"                "allow"
 
+# --- Migration guard -------------------------------------------------------
 # Flag present, verification.yml has NO migrations block -> inert.
 touch "$REPO/.sdlc/.enforce-migrations"
 check_edit "mig-unconfigured" "$REPO" "db/migrations/001_init.up.sql" "allow"
@@ -275,12 +228,13 @@ rm -f "$REPO/.sdlc/.enforce-migrations"
 check_edit "mig-noflag" "$REPO" "db/migrations/006_new.up.sql"        "allow"
 check_bash "mig-noflag" "$REPO" "cat > db/migrations/006_new.up.sql"  "allow"
 
-mv "$TMP_ROOT/.flag-parked" "$REPO/.sdlc/.enforce-worktree"
-
-# With BOTH guards live, worktree isolation still covers migration files.
+# --- Both guards live at once ---------------------------------------------
 touch "$REPO/.sdlc/.enforce-migrations"
-check_edit "mig+worktree" "$REPO" "db/migrations/007_new.up.sql"      "deny"
-rm -f "$REPO/.sdlc/.enforce-migrations"
+touch "$REPO/.sdlc/.bugfix-active"
+check_edit "both" "$REPO" "db/migrations/007_new.up.sql"              "deny"
+check_edit "both" "$REPO" "src/main_test.go"                          "deny"
+check_edit "both" "$REPO" "src/main.go"                               "allow"
+rm -f "$REPO/.sdlc/.enforce-migrations" "$REPO/.sdlc/.bugfix-active"
 
 # ---------------------------------------------------------------------------
 # Report
@@ -295,7 +249,6 @@ for row in "${ROWS[@]}"; do
     IFS='|' read -r context tool subject expected actual status <<< "$row"
     # Keep the table readable when a fixture path is long.
     display="${subject//$REPO/\$REPO}"
-    display="${display//$WORKTREE/\$WT}"
     if [[ ${#display} -gt 52 ]]; then
         display="${display:0:49}..."
     fi
