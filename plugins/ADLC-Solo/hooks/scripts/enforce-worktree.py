@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-PreToolUse hook: blocks production code edits without worktree isolation.
+PreToolUse hook (matcher: Edit|Write): blocks production code edits without
+worktree isolation.
 
 Only active when .sdlc/.enforce-worktree flag file exists in the project root.
-Projects opt-in by creating this file (e.g., via adlc-init or manually).
+Projects opt in by creating this file (e.g., via adlc-init or manually).
 
 Allows:
   - .sdlc/ files (orchestrator's domain)
@@ -14,9 +15,13 @@ Allows:
 Blocks:
   - Production source code edits on ANY branch when not in a worktree
 
+The exemption rules live in _adlc_paths.py so this hook and the Bash guard
+(guard-bash-write.py) cannot drift apart. An inline fallback keeps the hook
+working if that module is unavailable.
+
 Output:
-  JSON with hookSpecificOutput.permissionDecision = "allow" or "deny"
-  Exit 0 always — decision is in the JSON output.
+  JSON with hookSpecificOutput.permissionDecision = "deny", or exit silently
+  to allow. Exit 0 always.
 """
 
 import json
@@ -24,58 +29,57 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def is_enforcement_active():
-    """Check if worktree enforcement is enabled via flag file."""
-    return os.path.exists(".sdlc/.enforce-worktree")
+try:
+    from _adlc_paths import (
+        deny, flag_active, is_exempt_from_worktree, is_in_worktree,
+    )
+except Exception:
+    # --- Inline fallback: keep behavior identical if the module is missing ---
+    def deny(reason):
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
+        }
 
+    def flag_active(flag_name):
+        return os.path.exists(os.path.join(".sdlc", flag_name))
 
-def is_in_worktree():
-    """Check if current directory is a git worktree (not the main working tree)."""
-    try:
-        git_dir = subprocess.run(
-            ["git", "rev-parse", "--git-dir"],
-            capture_output=True, text=True, timeout=5
-        ).stdout.strip()
+    def is_in_worktree(cwd=None):
+        try:
+            git_dir = subprocess.run(
+                ["git", "rev-parse", "--git-dir"],
+                capture_output=True, text=True, timeout=5, cwd=cwd
+            ).stdout.strip()
+            return "worktrees/" in git_dir
+        except Exception:
+            return False
 
-        # Worktrees have git-dir like /path/.git/worktrees/<name>
-        return "worktrees/" in git_dir
-    except Exception:
-        return False
-
-
-def is_allowed_file(file_path):
-    """Check if file is exempt from worktree enforcement."""
-    if not file_path:
-        return True
-
-    normalized = file_path.replace("\\", "/")
-
-    # .sdlc/ — orchestrator's domain, always allowed
-    if ".sdlc/" in normalized or normalized.startswith(".sdlc"):
-        return True
-
-    # Markdown files — docs, CLAUDE.md, domain-context.md, etc.
-    if normalized.endswith(".md"):
-        return True
-
-    # Test/spec/mock/fixture files or directories
-    parts = normalized.lower().split("/")
-    test_indicators = ("test", "tests", "spec", "specs", "mock", "mocks",
-                       "fixture", "fixtures", "testdata", "testutil",
-                       "__tests__", "__test__", "__mocks__")
-    for part in parts:
-        # Directory name matches
-        if part in test_indicators:
+    def is_exempt_from_worktree(file_path):
+        if not file_path:
             return True
-        # File name contains test/spec indicators
-        if part == os.path.basename(normalized).lower():
-            if ("_test." in part or ".test." in part or
-                "_spec." in part or ".spec." in part or
-                part.startswith("test_") or part.startswith("spec_")):
+        normalized = file_path.replace("\\", "/")
+        if ".sdlc/" in normalized or normalized.startswith(".sdlc"):
+            return True
+        if normalized.endswith(".md"):
+            return True
+        parts = normalized.lower().split("/")
+        basename = os.path.basename(normalized).lower()
+        test_indicators = ("test", "tests", "spec", "specs", "mock", "mocks",
+                           "fixture", "fixtures", "testdata", "testutil",
+                           "__tests__", "__test__", "__mocks__")
+        for part in parts:
+            if part in test_indicators:
                 return True
-
-    return False
+        if ("_test." in basename or ".test." in basename or
+                "_spec." in basename or ".spec." in basename or
+                basename.startswith("test_") or basename.startswith("spec_")):
+            return True
+        return False
 
 
 def main():
@@ -88,17 +92,19 @@ def main():
         sys.exit(0)
 
     # Enforcement must be explicitly enabled
-    if not is_enforcement_active():
+    if not flag_active(".enforce-worktree"):
         sys.exit(0)
 
     tool_input = hook_input.get("tool_input", {})
+    if not isinstance(tool_input, dict):
+        sys.exit(0)
     file_path = tool_input.get("file_path", "")
 
     if not file_path:
         sys.exit(0)
 
     # Always allow exempt files
-    if is_allowed_file(file_path):
+    if is_exempt_from_worktree(file_path):
         sys.exit(0)
 
     # Allow if running inside a worktree (dev-agent)
@@ -107,20 +113,12 @@ def main():
 
     # Block production code edits on ANY branch when not in a worktree
     basename = os.path.basename(file_path)
-    reason = (
+    print(json.dumps(deny(
         f"Cannot edit production code ({basename}) directly. "
         "ADLC requires production code changes in an isolated worktree via dev-agent. "
         "Delegate this edit to a dev-agent with isolation: worktree. "
         "To disable enforcement: remove .sdlc/.enforce-worktree"
-    )
-    result = {
-        "hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": reason,
-        }
-    }
-    print(json.dumps(result))
+    )))
     sys.exit(0)
 
 
