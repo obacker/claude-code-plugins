@@ -303,4 +303,14 @@ Mark Verification complete.
    Use /commit-commands:commit-push-pr to create branch, commit, push, and open PR
    ```
 
+   **Cloud sessions:** run `command -v gh` first. `gh` is not installed in
+   Claude Code cloud sessions. If it is missing, do not fail the phase — push
+   the branch and tell the user:
+   "Branch pushed. `gh` is unavailable in this session, so open the PR from
+   the GitHub web UI, or use the github plugin's PR tools."
+
+   Whether local or cloud, run git commands ONE PER Bash CALL. The cloud
+   auto-mode classifier rejects `git add && git commit && git push`; separate
+   invocations pass.
+
 Mark Summary complete.

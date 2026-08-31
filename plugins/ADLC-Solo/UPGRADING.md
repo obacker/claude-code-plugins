@@ -13,6 +13,116 @@ This file documents what to do when scaffold files change between versions.
 
 ---
 
+## v2.2.x → v2.3.0
+
+### 1. Check whether you actually have a `.claude/settings.json` (most projects: no)
+
+`adlc-init` has been failing to write this file since v2.1.0 for every detected
+stack (Go, TypeScript, JavaScript, Python, Rust). A `sed` collided with a
+literal pipe in the substituted command, and `set -e` killed the run at that
+point. So the `env` block v2.1.0 promised almost certainly never landed in your
+project, even though the release notes said it did.
+
+```bash
+cat .claude/settings.json
+```
+
+Missing or empty → regenerate it:
+
+```bash
+adlc-init
+```
+
+`adlc-init` skips files that already exist, so this is safe to run in an
+initialized project. It will create only what is missing.
+
+If the file exists but has no `env` block, add one:
+
+```json
+{
+  "env": {
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "75",
+    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "16000"
+  }
+}
+```
+
+### 2. If you use Claude Code cloud sessions: vendor the plugin
+
+Cloud sessions (claude.ai/code) load hooks from your repo's
+`.claude/settings.json`, but do NOT reliably load user-level installed plugins.
+Without vendoring, none of the ADLC hooks, agents or skills are active in cloud.
+
+```bash
+adlc-init --vendor
+git add .claude
+git commit -m "chore: vendor ADLC for cloud sessions"
+```
+
+This copies `agents/`, `skills/` and `hooks/` into `.claude/` and merges hook
+entries into `.claude/settings.json` using repo-relative paths.
+`${CLAUDE_PLUGIN_ROOT}` does not resolve for a vendored copy, which is why the
+paths differ from the plugin's own `hooks.json`.
+
+The merge preserves your existing keys and hook entries and dedupes by command
+string, so re-running it after a plugin update is safe and idempotent. Re-run it
+on every plugin upgrade — the vendored copy is a snapshot and does not
+auto-update.
+
+Local-only projects need nothing here.
+
+### 3. Nothing is required for the new guards
+
+The Bash write guard is registered automatically. It respects the same
+`.sdlc/.enforce-worktree` opt-in you already have; if you never created that
+flag, nothing changes for you.
+
+The two new guards are off by default:
+
+| Want it? | Do this |
+|----------|---------|
+| Migration rollback enforcement | `touch .sdlc/.enforce-migrations` **and** add a `migrations:` block to `verification.yml` — the guard is inert without both |
+| Test lock during bugfix | nothing — the `bugfix` skill sets and clears `.sdlc/.bugfix-active` itself |
+
+The `migrations:` block is optional and is not written by `adlc-init`. The
+verification.yml schema is otherwise unchanged:
+
+```yaml
+migrations:
+  dir: "db/migrations"
+  up_suffix: ".up.sql"
+  down_suffix: ".down.sql"
+```
+
+### 4. If a bugfix ever aborts, check for a stale flag
+
+`.sdlc/.bugfix-active` makes existing test files read-only. The `bugfix` skill
+removes it on every exit path, but if a session is killed mid-bugfix the flag
+can survive and silently block test edits in the next session.
+
+```bash
+ls -a .sdlc/ | grep bugfix-active && rm .sdlc/.bugfix-active
+```
+
+### 5. Optional: stop committing runtime state
+
+Root-level `.sdlc/` is runtime state (agent log, context snapshots, enforcement
+flags), not source. If your project commits it:
+
+```bash
+git rm -r --cached .sdlc
+printf '/.sdlc/\n' >> .gitignore
+```
+
+### Behavior change to be aware of
+
+Writing production code through Bash from the main checkout is now denied when
+`.sdlc/.enforce-worktree` is set. If you had workflows relying on
+`cat > src/foo.go` from the main checkout, they will now be blocked — that was
+the bypass this release closes. Use a worktree, or remove the flag.
+
+---
+
 ## v2.1.x → v2.2.0
 
 ### What changed

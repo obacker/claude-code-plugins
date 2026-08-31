@@ -1,5 +1,137 @@
 # Changelog
 
+## v2.3.0 (2026-08-31)
+
+### Fix: Bash write bypass (critical)
+
+Both PreToolUse hooks were registered with matcher `"Edit|Write"` only. A file
+written through the **Bash** tool never reached them, so worktree isolation and
+spec immutability were bypassable with `cat > f`, `tee`, `sed -i`, `>>`, `cp`,
+`dd`, or `python -c`. The README claimed "Platform (hook blocks the action)"
+for both; that claim was false on the Bash path.
+
+**New hook scripts:**
+
+- `hooks/scripts/guard-bash-write.py` — registered for matcher `"Bash"`. Parses
+  the command for write constructs, resolves the destinations, and applies the
+  same two rules the Edit/Write guards apply.
+- `hooks/scripts/_adlc_bashparse.py` — the command parser. Fails open by
+  design: a destination it cannot resolve confidently produces no target, and a
+  command with no targets is allowed. Targets built from variables, command
+  substitution, or process substitution are deliberately not resolved.
+- `hooks/scripts/_adlc_paths.py` — the exemption predicates (`.sdlc/`, `.md`,
+  test/spec/mock/fixture, worktree detection, approved-spec lookup), shared so
+  the Edit/Write and Bash guards cannot drift apart.
+
+`enforce-worktree.py` now imports those predicates, with an inline fallback so a
+missing module degrades to the previous behavior rather than failing.
+
+**Gating:** worktree isolation stays opt-in behind `.sdlc/.enforce-worktree`.
+Approved-spec immutability is NOT flag-gated on the Bash path, mirroring
+`protect-spec.py` which is likewise unconditional — gating it would have left
+the bypass open on every project that has not opted into worktrees.
+
+### Add: `adlc-init --vendor`
+
+Copies `agents/`, `skills/` and `hooks/` into the project's `.claude/` and
+merges hook entries into `.claude/settings.json` with `${CLAUDE_PLUGIN_ROOT}`
+rewritten to repo-relative paths (that variable does not resolve for a vendored
+copy).
+
+This is what makes ADLC work in Claude Code cloud sessions. Cloud sessions DO
+load and fire hooks from the repo's `.claude/settings.json`, but do NOT reliably
+load user-level installed plugins — `~/.claude/settings.json` does not exist
+there. Vendoring is the reliable distribution path for cloud.
+
+The merge preserves unrelated top-level keys and existing hook entries, and
+dedupes by command string, so re-running adds nothing. A `settings.json` that is
+not valid JSON is left untouched rather than overwritten.
+
+### Fix: `adlc-init` never wrote `.claude/settings.json`
+
+Pre-existing since v2.1.0. The `sed` filling `scaffold/settings.json` used
+`s|{{POST_EDIT_CHECK}}|$POST_EDIT_CHECK|g`, but the substituted value contains a
+literal pipe (`go vet ./... 2>&1 | head -20`), which collides with sed's
+delimiter. `sed` aborted, `set -e` killed the script, and the file was never
+written — for Go, TypeScript, JavaScript, Python and Rust projects, i.e. every
+detected stack.
+
+The `env` block introduced in v2.1.0 (`CLAUDE_AUTOCOMPACT_PCT_OVERRIDE`,
+`CLAUDE_CODE_MAX_OUTPUT_TOKENS`) therefore never reached those projects, despite
+the v2.1.0 notes saying it did. Substitution now goes through `python3`, which
+the plugin already requires. Verified rc=0 with a valid `settings.json` and the
+env block present on all four stacks.
+
+### Add: two opt-in PreToolUse guards
+
+Both are inert until you create the flag file, both fail open, and both use the
+same exemption logic as the worktree guard.
+
+- `hooks/scripts/guard-migrations.py` — activates on `.sdlc/.enforce-migrations`.
+  Denies creating a NEW up-migration under the configured directory unless the
+  matching down artifact is written by the same operation or already exists.
+  The directory and the up/down suffixes are read from `verification.yml`
+  (`.sdlc/verification.yml` first, then the project root); with no `migrations:`
+  block the guard is inert. **The verification.yml schema is unchanged** — the
+  block is optional and is not written by `adlc-init`.
+- `hooks/scripts/guard-test-lock.py` — activates on `.sdlc/.bugfix-active`.
+  Denies edits to test files that already exist; creating a NEW test file stays
+  allowed, so the RED step still works. The `bugfix` skill creates the flag in
+  Phase 0 and removes it in Phase 5 and on both abort paths (Phase 3 BLOCKED,
+  Phase 4 FAIL), which previously exited without any teardown.
+
+### Add: absorbed from ADLC-Team
+
+- `SessionEnd` trigger for `save-context.sh` (was `PreCompact` only).
+- Async discovery harvest in `on-agent-stop.sh`: the `## Discoveries` section of
+  the agent's report is appended to `.sdlc/_active/CAPTURES.md` by a forked and
+  disowned subshell, so the hook returns immediately (measured 69ms).
+
+Nothing else was taken from Team. Team's `pretooluse-guard.sh` is broken in
+three ways — its `*/.sdlc/*` fast path makes the spec-approval block below it
+unreachable, it ignores the `.enforce-worktree` opt-in, and it denies test files
+from the main checkout, blocking the RED step of TDD. Solo's Python hooks are
+correct on all three and were not replaced.
+
+### Fix: README enforcement claims
+
+- The enforcement table now has a **matcher coverage** column stating exactly
+  which tools each hook intercepts. No row claims platform-level blocking on a
+  path it does not cover.
+- New "Known gaps" section stating plainly what the Bash parser does not
+  resolve, and that the Bash path is narrower than the Edit/Write path.
+- The Commands table listed eight `/adlc:*` commands. There is no `commands/`
+  directory in this plugin; they are skills. Replaced with a Skills table using
+  the correct `/adlc-solo:*` invocation.
+
+### Add: cloud-safety guidance in skills and agents
+
+Audited every skill and agent. No `gh` invocations and no `&&`-chained git
+commands existed, so nothing needed repair; guidance was added to keep it that
+way:
+
+- `agents/dev-agent.md`: new "Cloud-Safe Git" section — one git invocation per
+  Bash call (the cloud auto-mode classifier rejects
+  `git add && git commit && git push`), and `gh` is not installed in cloud.
+- `skills/build-feature/SKILL.md`: the PR step now checks `command -v gh` first
+  and degrades with a clear message instead of failing.
+
+### Add: `tests/hook-matrix.sh`
+
+Builds a throwaway git repo with an approved spec (`spec_approved_at` set) and a
+real worktree, feeds real JSON on stdin to every registered PreToolUse guard,
+and asserts 48 allow/deny rows. All matching strips whitespace first, so
+`json.dumps`' `": "` and `printf`'s `":"` both match and assertions cannot
+silently pass on formatting. Exits non-zero on any mismatch.
+
+### Hygiene
+
+- `.gitignore`: root-level `/.sdlc/` is now ignored; `.sdlc/agent-log.txt` was
+  committed and has been removed from the index.
+- `plugin.json` and `.claude-plugin/marketplace.json` both at `2.3.0`.
+- Fixed pre-existing marketplace drift for `adlc-team` (7.3.0 → 7.4.0, matching
+  its `plugin.json`). No other ADLC-Team file was touched.
+
 ## v2.2.0 (2026-04-18)
 
 ### Add: AI Collaboration Principles (Karpathy-style)
