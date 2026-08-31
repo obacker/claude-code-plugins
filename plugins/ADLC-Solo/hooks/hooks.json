@@ -2,90 +2,19 @@
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/protect-spec.py",
-            "timeout": 5,
-            "statusMessage": "Checking spec protection..."
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/guard-bash-write.py",
-            "timeout": 5,
-            "statusMessage": "Checking Bash file writes..."
-          }
-        ]
-      },
-      {
         "matcher": "Edit|Write|Bash",
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/guard-migrations.py",
-            "timeout": 5,
-            "statusMessage": "Checking migration rollback..."
-          },
           {
             "type": "command",
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/guard-test-lock.py",
             "timeout": 5,
             "statusMessage": "Checking test lock..."
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
+          },
           {
             "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-edit-compile-check.py",
-            "timeout": 15,
-            "statusMessage": "Running compile check..."
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/on-agent-stop.sh",
-            "timeout": 10,
-            "statusMessage": "Validating agent work..."
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/save-context.sh",
-            "timeout": 10,
-            "statusMessage": "Saving context snapshot..."
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/save-context.sh",
-            "timeout": 10,
-            "statusMessage": "Saving session state..."
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/guard-migrations.py",
+            "timeout": 5,
+            "statusMessage": "Checking migration rollback..."
           }
         ]
       }
