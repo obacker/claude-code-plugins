@@ -6,6 +6,7 @@ description: >
   Runs in main working tree (not isolated) to see merged code.
   Tests but does NOT fix production code — report only.
 model: haiku
+load-claude-md: false
 maxTurns: 20
 tools:
   - Read

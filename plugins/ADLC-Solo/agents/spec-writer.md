@@ -6,6 +6,7 @@ description: >
   ACs, risk flags, and feature-registry.json scaffold. Must be spawned as
   a separate agent, never inline.
 model: opus
+load-claude-md: false
 maxTurns: 30
 tools:
   - Read

@@ -1,6 +1,7 @@
 ---
 name: start-session
 description: Resume ADLC work — loads context, checks state, reports where you left off. Use at the start of every session.
+disable-model-invocation: true
 ---
 
 # ADLC Start Session

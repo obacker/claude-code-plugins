@@ -6,6 +6,7 @@ description: >
   spec compliance passes. Runs in main working tree (not isolated).
   Tests but does NOT fix production code — report only.
 model: sonnet
+load-claude-md: false
 maxTurns: 25
 tools:
   - Read

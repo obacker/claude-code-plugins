@@ -5,6 +5,7 @@ description: >
   Each dev-agent handles one task on one branch. Spawned by
   build-feature orchestration — never self-spawns.
 model: sonnet
+load-claude-md: false
 isolation: worktree
 maxTurns: 35
 tools:

@@ -2,6 +2,7 @@
 name: plan-milestone
 description: Plan a milestone — decompose a feature into milestones with scope, dependencies, and effort estimates. No implementation.
 argument-hint: Feature or epic description
+disable-model-invocation: true
 ---
 
 # ADLC Plan Milestone

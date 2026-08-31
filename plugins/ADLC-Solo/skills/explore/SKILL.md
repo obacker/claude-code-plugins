@@ -1,6 +1,7 @@
 ---
 name: explore
 description: Map an existing codebase — architecture, patterns, dependencies, test coverage, domain concepts. Produces an exploration report.
+disable-model-invocation: true
 ---
 
 # ADLC Explore

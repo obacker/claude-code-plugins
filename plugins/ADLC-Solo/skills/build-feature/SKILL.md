@@ -2,6 +2,7 @@
 name: build-feature
 description: Full ADLC feature lifecycle — spec, plan, implement, review, QA, verify. Use for any new feature or significant enhancement.
 argument-hint: Feature description (e.g., "add user authentication with JWT")
+disable-model-invocation: true
 ---
 
 # ADLC Build Feature

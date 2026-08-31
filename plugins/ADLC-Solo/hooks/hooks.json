@@ -9,12 +9,6 @@
             "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/protect-spec.py",
             "timeout": 5,
             "statusMessage": "Checking spec protection..."
-          },
-          {
-            "type": "command",
-            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/enforce-worktree.py",
-            "timeout": 5,
-            "statusMessage": "Checking worktree isolation..."
           }
         ]
       },

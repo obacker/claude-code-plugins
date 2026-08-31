@@ -2,6 +2,7 @@
 name: adlc
 description: "Smart ADLC entry point — auto-detects project state and routes to the right workflow. Use as default starting command."
 argument-hint: "Optional: feature description, bug report, or milestone ID"
+disable-model-invocation: true
 ---
 
 # ADLC — Smart Router

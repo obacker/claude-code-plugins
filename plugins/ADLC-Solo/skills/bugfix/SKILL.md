@@ -2,6 +2,7 @@
 name: bugfix
 description: Lightweight bug fix with root-cause analysis — investigate, delegate fix to dev-agent in worktree, QA validation by qa-adversarial. No spec/milestone phases.
 argument-hint: Bug description or error message
+disable-model-invocation: true
 ---
 
 # ADLC Bugfix
