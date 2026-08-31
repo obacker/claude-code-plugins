@@ -1,7 +1,7 @@
 {
   "name": "adlc-solo",
-  "version": "2.3.0",
-  "description": "Agent-Driven Lifecycle — structured feature development with BDD specs, TDD implementation, automated review, and verification gates. Requires companion plugins: pr-review-toolkit, commit-commands. Recommended: claude-md-management, context7, github, security-guidance, LSP (per stack).",
+  "version": "3.0.0",
+  "description": "Lightweight solo dev workflow: spec-lite, plan-mode gate for risky changes, verification loop, and a pre-commit review pass. Optional companions: pr-review-toolkit, commit-commands.",
   "author": {
     "name": "oBacker",
     "email": "tuan@obacker.com",
@@ -9,7 +9,7 @@
   },
   "license": "MIT",
   "homepage": "https://github.com/obacker/claude-code-plugins",
-  "keywords": ["sdlc", "bdd", "tdd", "code-review", "multi-agent", "specification"],
+  "keywords": ["sdlc", "solo", "code-review", "verification"],
   "userConfig": {
     "projectStack": {
       "title": "Project Stack",

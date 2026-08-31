@@ -1,5 +1,106 @@
 # Changelog
 
+## v3.0.0 (2026-08-31)
+
+A deliberate simplification. v2.3.0 was designed in April 2026 and encoded
+workarounds for platform gaps that no longer exist: plan mode, the built-in
+`Explore` and `Plan` subagents, native compaction and checkpointing, and
+`/rewind` now cover what the plugin was hand-rolling.
+
+### Breaking: skills removed
+
+`/adlc:build-feature`, `/adlc:plan-milestone`, `/adlc:plan-slice`,
+`/adlc:review-slice`, `/adlc:explore`, `/adlc:start-session` and `/adlc:adlc`
+are removed. Use `/adlc:feature`, `/adlc:bugfix`, `/adlc:ship`.
+
+### Breaking: BDD spec artifacts removed
+
+`milestone-spec.md` and `feature-registry.json` are no longer produced or read.
+Existing files under `.sdlc/milestones/` are ignored, not migrated, and not
+deleted. `adlc-init` no longer creates `.sdlc/milestones/`.
+
+The `spec-writer` agent that produced them is gone. It wrote BDD acceptance
+criteria plus a registry whose purpose was to let agents prove compliance to
+each other; a solo developer has nobody to prove to.
+
+### Breaking: worktree isolation and spec immutability enforcement removed
+
+`enforce-worktree.py` and `protect-spec.py` are deleted. `.sdlc/.enforce-worktree`
+has no effect; delete the flag file from any project that has one.
+
+Worktree enforcement was the single largest drag on solo speed. With the flag
+set, every production-code edit outside a worktree was denied, so a one-line fix
+cost a full agent spawn plus worktree setup.
+
+### Breaking: agents removed
+
+`spec-writer`, `dev-agent` and `qa-spec-checker` are deleted. `qa-adversarial`
+is renamed and rewritten as `reviewer`. A new project-level `Explore` agent
+overrides the built-in and pins it to haiku; since v2.1.198 the built-in
+inherits the main conversation's model, so exploration on an Opus session is
+expensive.
+
+`dev-agent` was the largest token sink. The main session writing code directly
+is faster, and `/rewind` covers rollback.
+
+### Changed: TDD is conditional
+
+Test-first applies to money, invoicing, tax, auth, permissions, and database
+migrations. Everything else does not need it. In v2.3.0 it was the "TDD iron
+law", universal and unconditional.
+
+### Changed: subagents no longer load CLAUDE.md
+
+`load-claude-md: false` on both agents. `scaffold/CLAUDE.md` was being
+re-injected into every subagent spawn at 1344 tokens.
+
+### Changed: all skills are user-invoked only
+
+`disable-model-invocation: true` on all three skills. `build-feature` was a
+3153-token body that triggered an agent chain; it must never fire because the
+user's sentence happened to contain the word "add".
+
+### Changed: hooks reduced from 9 registrations to 2
+
+Kept: `guard-test-lock.py` (the one failure mode a stronger model does not
+self-correct: weakening a test until it passes) and `guard-migrations.py`
+(migrations are the changes `/rewind` cannot undo). Both now cover
+`Edit|Write|Bash` and both stay opt-in behind their flag files.
+
+Dropped: `protect-spec.py`, `enforce-worktree.py`, `guard-bash-write.py` as a
+separate entry (both surviving guards already handle the Bash path through
+`_adlc_bashparse`), `post-edit-compile-check.py` (belongs in the project's own
+`.claude/settings.json`, where `adlc-init` already scaffolds it),
+`on-agent-stop.sh`, `save-context.sh` and `_harvest_discoveries.py`.
+
+`_adlc_paths.py` loses `is_exempt_from_worktree`, `is_in_worktree`,
+`is_spec_file` and `is_spec_approved_for_file`. `hook-matrix.sh` drops the
+worktree and spec-protection cases and covers the two surviving guards on both
+the Edit and Bash paths; 43 cases, all passing.
+
+### Measured token effect
+
+Measured with tiktoken `cl100k_base`.
+
+| Item | v2.3.0 | v3.0.0 |
+|---|---|---|
+| `scaffold/CLAUDE.md`, re-injected into every subagent spawn | 1344 | 346 |
+| Always-on plugin metadata (skill and agent names plus descriptions, plus the plugin description) | 485 | 230 |
+| Per-spawn context floor (CLAUDE.md + domain-context + domain-terms + verification.yml) | 2167 | 1169 |
+| One feature run, 5 dev tasks: system prompt and context floor before any real work | 32506 | not applicable; there is no agent chain |
+
+The always-on metadata was never the problem. The orchestration was: a single
+feature spawned 6 to 11 agents, each paying the per-spawn floor, and Anthropic
+documents multi-agent workflows at roughly 4x to 7x the tokens of a
+single-agent session. The per-feature system-prompt and context floor drops
+from roughly 32500 tokens to under 3500 for a medium feature, because the
+default path is now "main session does the work" rather than "orchestrator
+spawns a chain".
+
+### Files
+
+35 files to 21.
+
 ## v2.3.0 (2026-08-31)
 
 ### Fix: Bash write bypass (critical)

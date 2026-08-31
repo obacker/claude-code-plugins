@@ -183,7 +183,7 @@ copy_file() {
 }
 
 # Create .sdlc directory
-mkdir -p .sdlc/milestones
+mkdir -p .sdlc
 
 # Copy and customize scaffold files
 echo "Scaffold files:"
@@ -396,10 +396,14 @@ echo "  2. Edit domain-terms.md — define exact terminology"
 echo "  3. Review verification.yml — adjust commands for your project"
 echo "  4. Review CLAUDE.md — verify detected stack and commands"
 echo "  5. Review .claude/settings.json — verify project-level hooks"
-echo "  6. Run: /adlc:build-feature [description] — to start your first feature"
+echo "  6. Run: /adlc:feature [description] to build your first feature"
+echo ""
+echo "Workflow commands:"
+echo "  /adlc:feature [description]  build a feature"
+echo "  /adlc:bugfix [description]   fix a defect"
+echo "  /adlc:ship                   pre-commit verification and review gate"
 echo ""
 echo "Optional enforcement flags (create to activate, remove to deactivate):"
-echo "  .sdlc/.enforce-worktree    production code edits must happen in a worktree"
 echo "  .sdlc/.enforce-migrations  new up-migrations require a down artifact"
 echo "                             (configure migrations: dir/up_suffix/down_suffix"
 echo "                              in verification.yml — inert without it)"
