@@ -15,17 +15,23 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_ROOT="$(dirname "$SCRIPT_DIR")"
 SCAFFOLD_DIR="$PLUGIN_ROOT/scaffold"
 FORCE=false
+VENDOR=false
 
 # Parse args
 for arg in "$@"; do
     case $arg in
         --force) FORCE=true ;;
+        --vendor) VENDOR=true ;;
         --help|-h)
-            echo "Usage: adlc-init [--force]"
+            echo "Usage: adlc-init [--force] [--vendor]"
             echo "Initialize ADLC v13 scaffold for the current project."
             echo ""
             echo "Options:"
             echo "  --force    Overwrite existing scaffold files"
+            echo "  --vendor   Copy agents/, skills/ and hooks/ into .claude/ and wire"
+            echo "             them into .claude/settings.json with relative paths."
+            echo "             Required for Claude Code cloud sessions, which load"
+            echo "             repo .claude/ but not user-level installed plugins."
             echo "  --help     Show this help"
             exit 0
             ;;
@@ -234,10 +240,24 @@ if [[ ! -f ".claude/settings.json" ]] || [[ "$FORCE" == "true" ]]; then
         PRE_COMPACT_CHECK="echo 'no build validation configured'"
     fi
 
-    sed \
-        -e "s|{{POST_EDIT_CHECK}}|$POST_EDIT_CHECK|g" \
-        -e "s|{{PRE_COMPACT_CHECK}}|$PRE_COMPACT_CHECK|g" \
-        "$SCAFFOLD_DIR/settings.json" > ".claude/settings.json"
+    # Substituted with python, not sed: both commands contain a literal "|"
+    # (e.g. "go vet ./... 2>&1 | head -20"), which collides with sed's
+    # s|...|...| delimiter and aborts the script under set -e.
+    SCAFFOLD_SETTINGS="$SCAFFOLD_DIR/settings.json" \
+    POST_EDIT_CHECK="$POST_EDIT_CHECK" \
+    PRE_COMPACT_CHECK="$PRE_COMPACT_CHECK" \
+    python3 <<'PYSETTINGS'
+import os
+
+with open(os.environ["SCAFFOLD_SETTINGS"]) as f:
+    content = f.read()
+
+for key in ("POST_EDIT_CHECK", "PRE_COMPACT_CHECK"):
+    content = content.replace("{{%s}}" % key, os.environ.get(key, ""))
+
+with open(".claude/settings.json", "w") as f:
+    f.write(content)
+PYSETTINGS
     echo -e "  ${GREEN}CREATE${NC} .claude/settings.json (project-level hooks)"
 else
     echo -e "  ${YELLOW}SKIP${NC} .claude/settings.json (already exists)"
@@ -248,9 +268,128 @@ copy_file "$SCAFFOLD_DIR/domain-terms.md" "domain-terms.md" "domain-terms.md"
 
 echo ""
 
+# --- Vendor mode: copy the plugin into .claude/ -----------------------------
+# Claude Code cloud sessions load hooks, agents and skills from the repo's
+# .claude/ directory, but do NOT reliably load user-level installed plugins
+# (~/.claude/settings.json does not exist there). Vendoring is the reliable
+# distribution path for cloud.
+if [[ "$VENDOR" == "true" ]]; then
+    echo "Vendoring plugin into .claude/:"
+
+    mkdir -p .claude
+    for COMPONENT in agents skills hooks; do
+        if [[ -d "$PLUGIN_ROOT/$COMPONENT" ]]; then
+            rm -rf ".claude/$COMPONENT"
+            cp -R "$PLUGIN_ROOT/$COMPONENT" ".claude/$COMPONENT"
+            echo -e "  ${GREEN}VENDOR${NC} .claude/$COMPONENT/"
+        fi
+    done
+
+    # Drop Python bytecode caches that may have been copied along.
+    find .claude -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+
+    # Merge vendored hook entries into .claude/settings.json.
+    # ${CLAUDE_PLUGIN_ROOT} does not resolve for a vendored copy, so commands
+    # are rewritten to repo-relative paths.
+    if [[ -f ".claude/hooks/hooks.json" ]]; then
+        python3 - <<'PYVENDOR'
+import json
+import os
+import sys
+
+SETTINGS = ".claude/settings.json"
+VENDORED = ".claude/hooks/hooks.json"
+
+try:
+    with open(VENDORED) as f:
+        vendored = json.load(f).get("hooks", {})
+except Exception as exc:
+    print("  WARN could not read %s: %s" % (VENDORED, exc))
+    sys.exit(0)
+
+
+def to_relative(command):
+    """${CLAUDE_PLUGIN_ROOT} does not resolve when vendored."""
+    return (command
+            .replace("${CLAUDE_PLUGIN_ROOT}/hooks/", ".claude/hooks/")
+            .replace("$CLAUDE_PLUGIN_ROOT/hooks/", ".claude/hooks/"))
+
+
+settings = {}
+if os.path.exists(SETTINGS):
+    try:
+        with open(SETTINGS) as f:
+            settings = json.load(f)
+    except Exception as exc:
+        # Never clobber a file we cannot parse.
+        print("  WARN %s is not valid JSON (%s) — leaving it untouched" % (SETTINGS, exc))
+        sys.exit(0)
+if not isinstance(settings, dict):
+    print("  WARN %s is not a JSON object — leaving it untouched" % SETTINGS)
+    sys.exit(0)
+
+hooks = settings.setdefault("hooks", {})
+if not isinstance(hooks, dict):
+    print("  WARN %s has a non-object 'hooks' key — leaving it untouched" % SETTINGS)
+    sys.exit(0)
+
+added = 0
+for event, groups in vendored.items():
+    existing_groups = hooks.setdefault(event, [])
+    if not isinstance(existing_groups, list):
+        continue
+
+    for group in groups:
+        matcher = group.get("matcher")
+        entries = [dict(h, command=to_relative(h.get("command", "")))
+                   for h in group.get("hooks", [])]
+
+        # Find an existing group with the same matcher to merge into.
+        target = None
+        for candidate in existing_groups:
+            if isinstance(candidate, dict) and candidate.get("matcher") == matcher:
+                target = candidate
+                break
+
+        if target is None:
+            new_group = {"hooks": entries}
+            if matcher is not None:
+                new_group = {"matcher": matcher, "hooks": entries}
+            existing_groups.append(new_group)
+            added += len(entries)
+            continue
+
+        target_hooks = target.setdefault("hooks", [])
+        present = {h.get("command") for h in target_hooks if isinstance(h, dict)}
+        for entry in entries:
+            if entry["command"] not in present:
+                target_hooks.append(entry)
+                present.add(entry["command"])
+                added += 1
+
+with open(SETTINGS, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+
+print("  MERGE .claude/settings.json (%d hook entr%s added, existing keys preserved)"
+      % (added, "y" if added == 1 else "ies"))
+PYVENDOR
+    fi
+
+    echo -e "  ${YELLOW}NOTE${NC} Vendoring is what makes ADLC work in Claude Code cloud sessions — cloud loads repo .claude/ but not user-level installed plugins."
+    echo ""
+fi
+
+
 # --- Summary ---
 echo -e "${GREEN}ADLC v13 initialized!${NC}"
 echo ""
+if [[ "$VENDOR" == "true" ]]; then
+    echo "Vendored: .claude/{agents,skills,hooks}/ + hook entries in .claude/settings.json"
+    echo "Commit .claude/ so cloud sessions pick it up."
+    echo ""
+fi
+
 echo "Next steps:"
 echo "  1. Edit domain-context.md — describe your business domain"
 echo "  2. Edit domain-terms.md — define exact terminology"
@@ -258,6 +397,13 @@ echo "  3. Review verification.yml — adjust commands for your project"
 echo "  4. Review CLAUDE.md — verify detected stack and commands"
 echo "  5. Review .claude/settings.json — verify project-level hooks"
 echo "  6. Run: /adlc:build-feature [description] — to start your first feature"
+echo ""
+echo "Optional enforcement flags (create to activate, remove to deactivate):"
+echo "  .sdlc/.enforce-worktree    production code edits must happen in a worktree"
+echo "  .sdlc/.enforce-migrations  new up-migrations require a down artifact"
+echo "                             (configure migrations: dir/up_suffix/down_suffix"
+echo "                              in verification.yml — inert without it)"
+echo "  .sdlc/.bugfix-active       existing test files locked (set by /adlc:bugfix)"
 echo ""
 echo "Companion plugins (install if not already):"
 echo "  /plugin install pr-review-toolkit@claude-plugins-official"
