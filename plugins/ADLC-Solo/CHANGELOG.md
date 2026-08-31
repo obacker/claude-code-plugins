@@ -9,9 +9,9 @@ workarounds for platform gaps that no longer exist: plan mode, the built-in
 
 ### Breaking: skills removed
 
-`/adlc:build-feature`, `/adlc:plan-milestone`, `/adlc:plan-slice`,
-`/adlc:review-slice`, `/adlc:explore`, `/adlc:start-session` and `/adlc:adlc`
-are removed. Use `/adlc:feature`, `/adlc:bugfix`, `/adlc:ship`.
+`/adlc-solo:build-feature`, `/adlc-solo:plan-milestone`, `/adlc-solo:plan-slice`,
+`/adlc-solo:review-slice`, `/adlc-solo:explore`, `/adlc-solo:start-session` and `/adlc-solo:adlc`
+are removed. Use `/adlc-solo:feature`, `/adlc-solo:bugfix`, `/adlc-solo:ship`.
 
 ### Breaking: BDD spec artifacts removed
 
@@ -49,10 +49,17 @@ Test-first applies to money, invoicing, tax, auth, permissions, and database
 migrations. Everything else does not need it. In v2.3.0 it was the "TDD iron
 law", universal and unconditional.
 
-### Changed: subagents no longer load CLAUDE.md
+### Changed: subagents declare `load-claude-md: false`
 
-`load-claude-md: false` on both agents. `scaffold/CLAUDE.md` was being
-re-injected into every subagent spawn at 1344 tokens.
+Both agents carry `load-claude-md: false`.
+
+**This field is not recognized by Claude Code 2.1.251.** Verified against the
+installed binary: the frontmatter allowlist has no such key, so it is parsed
+and ignored. It is declared for forward compatibility and costs nothing today.
+
+The real saving in this release comes from `scaffold/CLAUDE.md` itself dropping
+from 1344 to 346 tokens, which cuts the same cost by 998 tokens per spawn
+whether or not the field is ever honored.
 
 ### Changed: all skills are user-invoked only
 

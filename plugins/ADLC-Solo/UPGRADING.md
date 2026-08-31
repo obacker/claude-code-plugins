@@ -22,13 +22,13 @@ project is migrated automatically, and nothing in your project is deleted.
 
 | v2.x | v3.0.0 |
 |---|---|
-| `/adlc:build-feature` | `/adlc:feature` |
-| `/adlc:bugfix` | `/adlc:bugfix` (unchanged name, rewritten body) |
-| `/adlc:review-slice` | `/adlc:ship` |
-| `/adlc:plan-milestone`, `/adlc:plan-slice` | plan mode, no skill |
-| `/adlc:explore` | the built-in `Explore` subagent, no skill |
-| `/adlc:start-session` | native compaction and checkpointing, no skill |
-| `/adlc:adlc` | the model routes on skill descriptions, no router |
+| `/adlc-solo:build-feature` | `/adlc-solo:feature` |
+| `/adlc-solo:bugfix` | `/adlc-solo:bugfix` (unchanged name, rewritten body) |
+| `/adlc-solo:review-slice` | `/adlc-solo:ship` |
+| `/adlc-solo:plan-milestone`, `/adlc-solo:plan-slice` | plan mode, no skill |
+| `/adlc-solo:explore` | the built-in `Explore` subagent, no skill |
+| `/adlc-solo:start-session` | native compaction and checkpointing, no skill |
+| `/adlc-solo:adlc` | the model routes on skill descriptions, no router |
 
 All three surviving skills carry `disable-model-invocation: true`, so they only
 run when you invoke them by name.

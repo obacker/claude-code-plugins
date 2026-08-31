@@ -23,8 +23,8 @@ The default path is now "main session does the work" rather than "orchestrator
 spawns a chain". A single feature used to spawn 6 to 11 agents, each paying a
 2167 token context floor.
 
-**Breaking.** `/adlc:build-feature`, `/adlc:plan-milestone`, `/adlc:plan-slice`,
-`/adlc:review-slice`, `/adlc:explore`, `/adlc:start-session` and `/adlc:adlc`
+**Breaking.** `/adlc-solo:build-feature`, `/adlc-solo:plan-milestone`, `/adlc-solo:plan-slice`,
+`/adlc-solo:review-slice`, `/adlc-solo:explore`, `/adlc-solo:start-session` and `/adlc-solo:adlc`
 are gone. See [UPGRADING.md](UPGRADING.md).
 
 ## What it does
@@ -83,6 +83,130 @@ so a heavyweight workflow never fires because your sentence contained the word
 | `bugfix` | `/adlc-solo:bugfix` | Root cause first, then RED, then GREEN |
 | `ship` | `/adlc-solo:ship` | Pre-commit gate: verification suite plus reviewer pass |
 
+Nothing fires on its own. If you never type one of the three, the plugin adds
+only its two hooks, and both of those are inert until you create a flag file.
+
+## Usage
+
+### First run, once per project
+
+```bash
+cd your-project
+adlc-init            # or: adlc-init --vendor, for claude.ai/code sessions
+```
+
+That writes `CLAUDE.md`, `verification.yml`, `domain-context.md`,
+`domain-terms.md`, `.claude/settings.json`, and an empty `.sdlc/`. Then do the
+one thing that actually matters:
+
+1. **Fill in `domain-terms.md`.** This is the highest-value file in the
+   scaffold. It is the only content the model cannot infer, and in an
+   accounting, tax, or legal codebase a wrong term is a business defect, not a
+   style issue.
+2. **Fill in `domain-context.md`** with architecture, constraints, and the
+   integration quirks that bite.
+3. **Check `verification.yml`.** `adlc-init` guesses your build, lint and test
+   commands from the project files. Run them once by hand and fix any that are
+   wrong; every gate in the plugin depends on them.
+4. **Add your conventions** to the Conventions section of `CLAUDE.md`, one line
+   each.
+
+### Building a feature
+
+```
+/adlc-solo:feature add CSV export to the invoice list
+```
+
+What happens:
+
+1. **Spec-lite.** You get 5 to 15 lines: intent, acceptance, constraints, out
+   of scope. Say yes, or correct it. Nothing is written to disk.
+2. **Risk routing.** The change is checked against money, invoicing, pricing,
+   tax, auth, permissions, tenancy, migrations, and user-data deletion.
+   - Sensitive: plan mode, then test-first. A failing test is committed on its
+     own before the implementation, so it cannot be quietly weakened later.
+   - 3+ files, not sensitive: plan mode, then straight implementation.
+   - 1 to 2 files, not sensitive: no plan mode, no ceremony. It just does it.
+3. **Verification loop.** The `post_task` commands run after each meaningful
+   change, not once at the end.
+4. It tells you to run `ship`.
+
+### Fixing a bug
+
+```
+/adlc-solo:bugfix invoice total is off by one cent on multi-line orders
+```
+
+The skill will not let itself fix anything until it states one hypothesis with
+evidence. Then it sets `.sdlc/.bugfix-active`, which locks your existing test
+files, writes a NEW failing test, fixes the code, and clears the flag.
+
+If a session dies mid-bugfix the flag can survive and silently block test edits
+next time. Check for it:
+
+```bash
+ls -a .sdlc/ | grep bugfix-active && rm .sdlc/.bugfix-active
+```
+
+### Before you commit
+
+```
+/adlc-solo:ship
+```
+
+Runs every `post_slice` command in `verification.yml`, then spawns the
+`reviewer` agent against the diff. You get a table and one verdict:
+
+```
+Verification: PASS
+Review: PASS_WITH_CONCERNS (0 critical, 2 warning)
+Verdict: SHIP
+```
+
+A non-zero exit on any gate stops it there. A CRITICAL finding means FIX FIRST.
+`ship` never edits anything, including tests; it reports and stops.
+
+### Finding things without burning context
+
+```
+Use the Explore agent to find where invoice totals are rounded
+```
+
+`Explore` is read-only, pinned to haiku, and returns file paths and line
+numbers rather than pasting files into your conversation.
+
+### Turning on the migration guard
+
+Off by default. It needs both a flag and config:
+
+```bash
+touch .sdlc/.enforce-migrations
+```
+
+```yaml
+# verification.yml
+migrations:
+  dir: "db/migrations"
+  up_suffix: ".up.sql"
+  down_suffix: ".down.sql"
+```
+
+After that, creating a new `*.up.sql` without a matching `*.down.sql` is
+denied, on both the Edit/Write and Bash paths.
+
+### A typical day
+
+```
+/adlc-solo:feature <what you want>     # or just describe it and edit directly
+...                                     # implement, verification runs as you go
+/adlc-solo:ship                         # gate
+git commit                              # your own commit command
+```
+
+For a one-line change, skip all of it and just say what you want. That is the
+point of v3: the process is there when the change is expensive, and out of the
+way when it is not.
+
 ## Architecture
 
 ```
@@ -119,7 +243,7 @@ opt-in behind a flag file and inert without it.
 | Tool restrictions | `tools:` in agent frontmatter | agent spawn | Platform (enforced) |
 | Model routing | `model:` in agent frontmatter | agent spawn | Platform (enforced) |
 | Skills never auto-fire | `disable-model-invocation: true` | skill listing | Platform (enforced) |
-| Agents skip CLAUDE.md | `load-claude-md: false` | agent spawn | Platform (enforced) |
+| Agents skip CLAUDE.md | `load-claude-md: false` | agent spawn | **Not enforced on Claude Code 2.1.251** - the key is unrecognized and ignored. Declared for forward compatibility |
 | Verification gates | `verification.yml` commands | - | Command (exit code) |
 
 Only two survive because the model does self-correct the rest. These two guard

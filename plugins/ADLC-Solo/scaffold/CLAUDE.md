@@ -37,6 +37,6 @@ Everything else does not need that.
 {{Add project-specific deployment procedures here.}}
 
 ## Workflow commands
-- `/adlc:feature [description]`: build a feature
-- `/adlc:bugfix [description]`: fix a defect
-- `/adlc:ship`: pre-commit verification and review gate
+- `/adlc-solo:feature [description]`: build a feature
+- `/adlc-solo:bugfix [description]`: fix a defect
+- `/adlc-solo:ship`: pre-commit verification and review gate

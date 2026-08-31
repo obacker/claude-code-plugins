@@ -8,7 +8,7 @@ pre_session:
     command: "{{DEPS_CHECK}}"  # e.g., "npm ci --silent" or "go mod download"
 
 post_task:
-  # Run after each dev-agent task completes
+  # Run after each meaningful change, during feature and bugfix work
   - name: "Build"
     command: "{{BUILD_CMD}}"   # e.g., "npm run build" or "go build ./..."
   - name: "Lint"
@@ -17,7 +17,7 @@ post_task:
     command: "{{TEST_CMD}}"    # e.g., "npm test" or "go test ./..."
 
 post_slice:
-  # Run after all tasks in a slice complete (more thorough)
+  # Run by the `ship` skill before committing (more thorough)
   - name: "Build"
     command: "{{BUILD_CMD}}"
   - name: "Lint"
